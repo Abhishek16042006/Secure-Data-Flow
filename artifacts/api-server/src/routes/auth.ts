@@ -20,7 +20,8 @@ const router: IRouter = Router();
 router.post("/auth/register", async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    const msg = parsed.error.issues.map((i) => i.message).join("; ");
+    res.status(400).json({ error: msg });
     return;
   }
 
@@ -61,7 +62,8 @@ router.post("/auth/register", async (req, res): Promise<void> => {
 router.post("/auth/login", async (req, res): Promise<void> => {
   const parsed = LoginBody.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
+    const msg = parsed.error.issues.map((i) => i.message).join("; ");
+    res.status(400).json({ error: msg });
     return;
   }
 

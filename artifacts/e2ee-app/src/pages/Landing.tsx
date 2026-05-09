@@ -5,7 +5,7 @@ import { Lock, ArrowRight, Server, Smartphone, ShieldCheck } from "lucide-react"
 import { Link } from "wouter";
 
 export default function Landing() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background text-foreground font-mono">
@@ -63,16 +63,29 @@ export default function Landing() {
         </div>
 
         <div className="w-full max-w-md bg-card border border-card-border p-8 rounded-lg shadow-2xl">
-          <div className="mb-6 flex justify-between items-end border-b border-border pb-4">
-            <h2 className="text-2xl font-bold text-white">
-              {isLogin ? "Access Vault" : "Generate Keys"}
+          <div className="mb-6">
+            <div className="flex border border-border mb-6">
+              <button
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 py-2.5 text-sm font-bold transition-colors ${!isLogin ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Register
+              </button>
+              <button
+                onClick={() => setIsLogin(true)}
+                className={`flex-1 py-2.5 text-sm font-bold transition-colors ${isLogin ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Login
+              </button>
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              {isLogin ? "Access your vault" : "Create your keys"}
             </h2>
-            <button 
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
-            >
-              {isLogin ? "Need keys?" : "Have keys?"}
-            </button>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isLogin
+                ? "Log in with your username and password."
+                : "First time here? Register to generate your encryption keys."}
+            </p>
           </div>
 
           {isLogin ? <LoginForm /> : <RegisterForm />}
