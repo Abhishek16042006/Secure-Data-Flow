@@ -3,20 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: E2EE Secure Messenger API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication & key management
+  - name: users
+    description: User directory
+  - name: messages
+    description: Encrypted messaging
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +30,378 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user — stores public key + encrypted private key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login — returns session + encrypted private key blob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current session user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (for selecting who to message)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserPublic"
+
+  /users/{id}/public-key:
+    get:
+      operationId: getUserPublicKey
+      tags: [users]
+      summary: Get a user's public key (SPKI base64) for encrypting messages to them
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicKeyResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages:
+    post:
+      operationId: sendMessage
+      tags: [messages]
+      summary: Send an encrypted message (ciphertext only — server never sees plaintext)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages/conversation/{otherUserId}:
+    get:
+      operationId: getConversation
+      tags: [messages]
+      summary: Get all encrypted messages between current user and another user
+      parameters:
+        - name: otherUserId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages/conversations:
+    get:
+      operationId: listConversations
+      tags: [messages]
+      summary: List all conversation partners (users the current user has messaged)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationSummary"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages/stats:
+    get:
+      operationId: getMessageStats
+      tags: [messages]
+      summary: Get message statistics for current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageStats"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    RegisterInput:
+      type: object
+      required: [username, password, publicKeySpki, encryptedPrivateKey, salt, iv]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        password:
+          type: string
+          minLength: 6
+        publicKeySpki:
+          type: string
+          description: Base64-encoded SPKI public key (ECDH P-256)
+        encryptedPrivateKey:
+          type: string
+          description: Base64-encoded encrypted private key (AES-GCM with password-derived key)
+        salt:
+          type: string
+          description: Base64-encoded PBKDF2 salt
+        iv:
+          type: string
+          description: Base64-encoded AES-GCM IV used to encrypt the private key
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [id, username, publicKeySpki, encryptedPrivateKey, salt, iv]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        publicKeySpki:
+          type: string
+          description: Base64-encoded SPKI public key
+        encryptedPrivateKey:
+          type: string
+          description: Base64-encoded AES-GCM encrypted private key
+        salt:
+          type: string
+          description: Base64-encoded PBKDF2 salt
+        iv:
+          type: string
+          description: Base64-encoded AES-GCM IV
+
+    UserPublic:
+      type: object
+      required: [id, username, publicKeySpki]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        publicKeySpki:
+          type: string
+
+    PublicKeyResponse:
+      type: object
+      required: [publicKeySpki]
+      properties:
+        publicKeySpki:
+          type: string
+
+    MessageInput:
+      type: object
+      required: [recipientId, ciphertextForRecipient, ciphertextForSender, ivForRecipient, ivForSender]
+      properties:
+        recipientId:
+          type: integer
+        ciphertextForRecipient:
+          type: string
+          description: Base64 AES-GCM ciphertext encrypted with recipient's shared secret
+        ciphertextForSender:
+          type: string
+          description: Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)
+        ivForRecipient:
+          type: string
+          description: Base64 IV for recipient ciphertext
+        ivForSender:
+          type: string
+          description: Base64 IV for sender ciphertext
+
+    Message:
+      type: object
+      required: [id, senderId, recipientId, ciphertextForRecipient, ciphertextForSender, ivForRecipient, ivForSender, createdAt]
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: integer
+        recipientId:
+          type: integer
+        ciphertextForRecipient:
+          type: string
+        ciphertextForSender:
+          type: string
+        ivForRecipient:
+          type: string
+        ivForSender:
+          type: string
+        createdAt:
+          type: string
+
+    ConversationSummary:
+      type: object
+      required: [partnerId, partnerUsername, partnerPublicKeySpki, messageCount, lastMessageAt]
+      properties:
+        partnerId:
+          type: integer
+        partnerUsername:
+          type: string
+        partnerPublicKeySpki:
+          type: string
+        messageCount:
+          type: integer
+        lastMessageAt:
+          type: string
+
+    MessageStats:
+      type: object
+      required: [totalSent, totalReceived, conversationCount]
+      properties:
+        totalSent:
+          type: integer
+        totalReceived:
+          type: integer
+        conversationCount:
+          type: integer

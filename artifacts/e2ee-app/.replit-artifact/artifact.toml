@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "E2EE Secure Messenger"
+version = "1.0.0"
+id = "artifacts/e2ee-app"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18364
+
+[services.development]
+run = "pnpm --filter @workspace/e2ee-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/e2ee-app", "run", "build" ]
+publicDir = "artifacts/e2ee-app/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18364"
+BASE_PATH = "/"
