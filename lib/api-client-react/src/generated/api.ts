@@ -24,9 +24,12 @@ import type {
   LoginInput,
   Message,
   MessageInput,
+  MessageRequestItem,
   MessageStats,
   PublicKeyResponse,
   RegisterInput,
+  RespondMessageRequestInput,
+  SendMessageRequestInput,
   UserPublic,
 } from "./api.schemas";
 
@@ -830,6 +833,330 @@ export function useListConversations<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Send a message request to another user
+ */
+export const getSendMessageRequestUrl = () => {
+  return `/api/message-requests`;
+};
+
+export const sendMessageRequest = async (
+  sendMessageRequestInput: SendMessageRequestInput,
+  options?: RequestInit,
+): Promise<MessageRequestItem> => {
+  return customFetch<MessageRequestItem>(getSendMessageRequestUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sendMessageRequestInput),
+  });
+};
+
+export const getSendMessageRequestMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendMessageRequest>>,
+    TError,
+    { data: BodyType<SendMessageRequestInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof sendMessageRequest>>,
+  TError,
+  { data: BodyType<SendMessageRequestInput> },
+  TContext
+> => {
+  const mutationKey = ["sendMessageRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof sendMessageRequest>>,
+    { data: BodyType<SendMessageRequestInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return sendMessageRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SendMessageRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof sendMessageRequest>>
+>;
+export type SendMessageRequestMutationBody = BodyType<SendMessageRequestInput>;
+export type SendMessageRequestMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Send a message request to another user
+ */
+export const useSendMessageRequest = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof sendMessageRequest>>,
+    TError,
+    { data: BodyType<SendMessageRequestInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof sendMessageRequest>>,
+  TError,
+  { data: BodyType<SendMessageRequestInput> },
+  TContext
+> => {
+  return useMutation(getSendMessageRequestMutationOptions(options));
+};
+
+/**
+ * @summary List incoming pending message requests
+ */
+export const getListIncomingRequestsUrl = () => {
+  return `/api/message-requests/incoming`;
+};
+
+export const listIncomingRequests = async (
+  options?: RequestInit,
+): Promise<MessageRequestItem[]> => {
+  return customFetch<MessageRequestItem[]>(getListIncomingRequestsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListIncomingRequestsQueryKey = () => {
+  return [`/api/message-requests/incoming`] as const;
+};
+
+export const getListIncomingRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listIncomingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listIncomingRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListIncomingRequestsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listIncomingRequests>>
+  > = ({ signal }) => listIncomingRequests({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listIncomingRequests>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListIncomingRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listIncomingRequests>>
+>;
+export type ListIncomingRequestsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List incoming pending message requests
+ */
+
+export function useListIncomingRequests<
+  TData = Awaited<ReturnType<typeof listIncomingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listIncomingRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListIncomingRequestsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List outgoing message requests (sent by me)
+ */
+export const getListOutgoingRequestsUrl = () => {
+  return `/api/message-requests/outgoing`;
+};
+
+export const listOutgoingRequests = async (
+  options?: RequestInit,
+): Promise<MessageRequestItem[]> => {
+  return customFetch<MessageRequestItem[]>(getListOutgoingRequestsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListOutgoingRequestsQueryKey = () => {
+  return [`/api/message-requests/outgoing`] as const;
+};
+
+export const getListOutgoingRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOutgoingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listOutgoingRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListOutgoingRequestsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listOutgoingRequests>>
+  > = ({ signal }) => listOutgoingRequests({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOutgoingRequests>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListOutgoingRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listOutgoingRequests>>
+>;
+export type ListOutgoingRequestsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary List outgoing message requests (sent by me)
+ */
+
+export function useListOutgoingRequests<
+  TData = Awaited<ReturnType<typeof listOutgoingRequests>>,
+  TError = ErrorType<ErrorResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listOutgoingRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListOutgoingRequestsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Accept or reject an incoming message request
+ */
+export const getRespondToMessageRequestUrl = (id: number) => {
+  return `/api/message-requests/${id}`;
+};
+
+export const respondToMessageRequest = async (
+  id: number,
+  respondMessageRequestInput: RespondMessageRequestInput,
+  options?: RequestInit,
+): Promise<MessageRequestItem> => {
+  return customFetch<MessageRequestItem>(getRespondToMessageRequestUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(respondMessageRequestInput),
+  });
+};
+
+export const getRespondToMessageRequestMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof respondToMessageRequest>>,
+    TError,
+    { id: number; data: BodyType<RespondMessageRequestInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof respondToMessageRequest>>,
+  TError,
+  { id: number; data: BodyType<RespondMessageRequestInput> },
+  TContext
+> => {
+  const mutationKey = ["respondToMessageRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof respondToMessageRequest>>,
+    { id: number; data: BodyType<RespondMessageRequestInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return respondToMessageRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RespondToMessageRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof respondToMessageRequest>>
+>;
+export type RespondToMessageRequestMutationBody =
+  BodyType<RespondMessageRequestInput>;
+export type RespondToMessageRequestMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Accept or reject an incoming message request
+ */
+export const useRespondToMessageRequest = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof respondToMessageRequest>>,
+    TError,
+    { id: number; data: BodyType<RespondMessageRequestInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof respondToMessageRequest>>,
+  TError,
+  { id: number; data: BodyType<RespondMessageRequestInput> },
+  TContext
+> => {
+  return useMutation(getRespondToMessageRequestMutationOptions(options));
+};
 
 /**
  * @summary Get message statistics for current user

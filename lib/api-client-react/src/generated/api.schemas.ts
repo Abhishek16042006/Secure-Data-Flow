@@ -92,3 +92,40 @@ export interface MessageStats {
   totalReceived: number;
   conversationCount: number;
 }
+
+export interface SendMessageRequestInput {
+  recipientId: number;
+}
+
+export type RespondMessageRequestInputAction =
+  (typeof RespondMessageRequestInputAction)[keyof typeof RespondMessageRequestInputAction];
+
+export const RespondMessageRequestInputAction = {
+  accept: "accept",
+  reject: "reject",
+} as const;
+
+export interface RespondMessageRequestInput {
+  action: RespondMessageRequestInputAction;
+}
+
+export type MessageRequestItemStatus =
+  (typeof MessageRequestItemStatus)[keyof typeof MessageRequestItemStatus];
+
+export const MessageRequestItemStatus = {
+  pending: "pending",
+  accepted: "accepted",
+  rejected: "rejected",
+} as const;
+
+export interface MessageRequestItem {
+  id: number;
+  senderId: number;
+  senderUsername: string;
+  senderPublicKeySpki: string;
+  recipientId: number;
+  recipientUsername: string;
+  recipientPublicKeySpki: string;
+  status: MessageRequestItemStatus;
+  createdAt: string;
+}

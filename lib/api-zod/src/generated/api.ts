@@ -145,6 +145,72 @@ export const ListConversationsResponse = zod.array(
 );
 
 /**
+ * @summary Send a message request to another user
+ */
+export const SendMessageRequestBody = zod.object({
+  recipientId: zod.number(),
+});
+
+/**
+ * @summary List incoming pending message requests
+ */
+export const ListIncomingRequestsResponseItem = zod.object({
+  id: zod.number(),
+  senderId: zod.number(),
+  senderUsername: zod.string(),
+  senderPublicKeySpki: zod.string(),
+  recipientId: zod.number(),
+  recipientUsername: zod.string(),
+  recipientPublicKeySpki: zod.string(),
+  status: zod.enum(["pending", "accepted", "rejected"]),
+  createdAt: zod.string(),
+});
+export const ListIncomingRequestsResponse = zod.array(
+  ListIncomingRequestsResponseItem,
+);
+
+/**
+ * @summary List outgoing message requests (sent by me)
+ */
+export const ListOutgoingRequestsResponseItem = zod.object({
+  id: zod.number(),
+  senderId: zod.number(),
+  senderUsername: zod.string(),
+  senderPublicKeySpki: zod.string(),
+  recipientId: zod.number(),
+  recipientUsername: zod.string(),
+  recipientPublicKeySpki: zod.string(),
+  status: zod.enum(["pending", "accepted", "rejected"]),
+  createdAt: zod.string(),
+});
+export const ListOutgoingRequestsResponse = zod.array(
+  ListOutgoingRequestsResponseItem,
+);
+
+/**
+ * @summary Accept or reject an incoming message request
+ */
+export const RespondToMessageRequestParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RespondToMessageRequestBody = zod.object({
+  action: zod.enum(["accept", "reject"]),
+});
+
+export const RespondToMessageRequestResponse = zod.object({
+  id: zod.number(),
+  senderId: zod.number(),
+  senderUsername: zod.string(),
+  senderPublicKeySpki: zod.string(),
+  recipientId: zod.number(),
+  recipientUsername: zod.string(),
+  recipientPublicKeySpki: zod.string(),
+  status: zod.enum(["pending", "accepted", "rejected"]),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary Get message statistics for current user
  */
 export const GetMessageStatsResponse = zod.object({

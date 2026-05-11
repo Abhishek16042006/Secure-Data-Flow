@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, messagesTable, usersTable } from "@workspace/db";
+import { db, messagesTable, usersTable, messageRequestsTable } from "@workspace/db";
 import { eq, or, and, ne, sql } from "drizzle-orm";
 import {
   SendMessageBody,
@@ -37,6 +37,25 @@ router.post("/messages", async (req, res): Promise<void> => {
     ivForRecipient,
     ivForSender,
   } = parsed.data;
+
+  const [accepted] = await db
+    .select()
+    .from(messageRequestsTable)
+    .where(
+      and(
+        or(
+          and(eq(messageRequestsTable.senderId, userId), eq(messageRequestsTable.recipientId, recipientId)),
+          and(eq(messageRequestsTable.senderId, recipientId), eq(messageRequestsTable.recipientId, userId)),
+        ),
+        eq(messageRequestsTable.status, "accepted"),
+      ),
+    )
+    .limit(1);
+
+  if (!accepted) {
+    res.status(403).json({ error: "You must have an accepted message request to send messages to this user" });
+    return;
+  }
 
   const [msg] = await db
     .insert(messagesTable)
@@ -122,21 +141,28 @@ router.get("/messages/conversations", async (req, res): Promise<void> => {
     lastMessageAt: string;
   }>(sql`
     SELECT
-      sub.partner_id        AS "partnerId",
-      u.username            AS "partnerUsername",
-      u.public_key_spki     AS "partnerPublicKeySpki",
-      COUNT(*)::int         AS "messageCount",
-      MAX(sub.created_at)::text AS "lastMessageAt"
+      p.partner_id                                          AS "partnerId",
+      u.username                                           AS "partnerUsername",
+      u.public_key_spki                                    AS "partnerPublicKeySpki",
+      COUNT(m.id)::int                                     AS "messageCount",
+      COALESCE(MAX(m.created_at), MAX(mr.created_at))::text AS "lastMessageAt"
     FROM (
-      SELECT
-        CASE WHEN sender_id = ${userId} THEN recipient_id ELSE sender_id END AS partner_id,
-        created_at
-      FROM messages
-      WHERE sender_id = ${userId} OR recipient_id = ${userId}
-    ) sub
-    JOIN users u ON u.id = sub.partner_id
-    GROUP BY sub.partner_id, u.username, u.public_key_spki
-    ORDER BY MAX(sub.created_at) DESC
+      SELECT CASE WHEN sender_id = ${userId} THEN recipient_id ELSE sender_id END AS partner_id
+      FROM message_requests
+      WHERE (sender_id = ${userId} OR recipient_id = ${userId})
+        AND status = 'accepted'
+    ) p
+    JOIN users u ON u.id = p.partner_id
+    LEFT JOIN messages m ON (
+      (m.sender_id = ${userId} AND m.recipient_id = p.partner_id)
+      OR (m.sender_id = p.partner_id AND m.recipient_id = ${userId})
+    )
+    LEFT JOIN message_requests mr ON (
+      (mr.sender_id = ${userId} AND mr.recipient_id = p.partner_id)
+      OR (mr.sender_id = p.partner_id AND mr.recipient_id = ${userId})
+    ) AND mr.status = 'accepted'
+    GROUP BY p.partner_id, u.username, u.public_key_spki
+    ORDER BY COALESCE(MAX(m.created_at), MAX(mr.created_at)) DESC
   `);
 
   res.json(ListConversationsResponse.parse(rows.rows));

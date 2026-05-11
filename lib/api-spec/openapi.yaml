@@ -16,6 +16,8 @@ tags:
     description: User directory
   - name: messages
     description: Encrypted messaging
+  - name: messageRequests
+    description: Message request system (accept before chatting)
 
 paths:
   /healthz:
@@ -234,6 +236,134 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /message-requests:
+    post:
+      operationId: sendMessageRequest
+      tags: [messageRequests]
+      summary: Send a message request to another user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequestInput"
+      responses:
+        "201":
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageRequestItem"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Request already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /message-requests/incoming:
+    get:
+      operationId: listIncomingRequests
+      tags: [messageRequests]
+      summary: List incoming pending message requests
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageRequestItem"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /message-requests/outgoing:
+    get:
+      operationId: listOutgoingRequests
+      tags: [messageRequests]
+      summary: List outgoing message requests (sent by me)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageRequestItem"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /message-requests/{id}:
+    patch:
+      operationId: respondToMessageRequest
+      tags: [messageRequests]
+      summary: Accept or reject an incoming message request
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondMessageRequestInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageRequestItem"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Not your request to respond to
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /messages/stats:
     get:
       operationId: getMessageStats
@@ -405,3 +535,42 @@ components:
           type: integer
         conversationCount:
           type: integer
+
+    SendMessageRequestInput:
+      type: object
+      required: [recipientId]
+      properties:
+        recipientId:
+          type: integer
+
+    RespondMessageRequestInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [accept, reject]
+
+    MessageRequestItem:
+      type: object
+      required: [id, senderId, senderUsername, senderPublicKeySpki, recipientId, recipientUsername, recipientPublicKeySpki, status, createdAt]
+      properties:
+        id:
+          type: integer
+        senderId:
+          type: integer
+        senderUsername:
+          type: string
+        senderPublicKeySpki:
+          type: string
+        recipientId:
+          type: integer
+        recipientUsername:
+          type: string
+        recipientPublicKeySpki:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        createdAt:
+          type: string

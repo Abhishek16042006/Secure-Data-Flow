@@ -8,9 +8,15 @@ import {
   useListUsers,
   useGetMessageStats,
   useLogout,
+  useSendMessageRequest,
+  useListIncomingRequests,
+  useListOutgoingRequests,
+  useRespondToMessageRequest,
   getListConversationsQueryKey,
   getGetConversationQueryKey,
   getGetMessageStatsQueryKey,
+  getListIncomingRequestsQueryKey,
+  getListOutgoingRequestsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { deriveSharedKey, encryptMessage, decryptMessage } from "@/lib/crypto";
@@ -20,17 +26,17 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Lock,
   Send,
-  ChevronDown,
-  ChevronUp,
   Users,
-  MessageSquare,
-  BarChart2,
   LogOut,
   ShieldCheck,
   Plus,
   BookOpen,
   Eye,
   EyeOff,
+  Check,
+  X,
+  Clock,
+  MessageSquare,
 } from "lucide-react";
 
 interface DecryptedMessage {
@@ -62,10 +68,14 @@ export default function Dashboard() {
 
   const logoutMutation = useLogout();
   const sendMessageMutation = useSendMessage();
+  const sendRequestMutation = useSendMessageRequest();
+  const respondMutation = useRespondToMessageRequest();
 
   const { data: conversations, isLoading: convoLoading } = useListConversations();
   const { data: stats } = useGetMessageStats();
   const { data: allUsers } = useListUsers();
+  const { data: incomingRequests, isLoading: incomingLoading } = useListIncomingRequests();
+  const { data: outgoingRequests } = useListOutgoingRequests();
   const { data: rawMessages, isLoading: msgsLoading } = useGetConversation(
     selectedPartnerId ?? 0,
     { query: { enabled: !!selectedPartnerId, queryKey: getGetConversationQueryKey(selectedPartnerId ?? 0) } }
@@ -117,17 +127,42 @@ export default function Dashboard() {
     setDecryptedMessages([]);
   };
 
-  const handleStartNewChat = (userId: number, publicKeySpki: string, username: string) => {
-    setSelectedPartnerId(userId);
-    setSelectedPartnerPublicKey(publicKeySpki);
-    setSelectedPartnerUsername(username);
-    setShowNewChat(false);
-    setDecryptedMessages([]);
+  const handleSendRequest = async (recipientId: number, recipientUsername: string) => {
+    try {
+      await sendRequestMutation.mutateAsync({ data: { recipientId } });
+      queryClient.invalidateQueries({ queryKey: getListOutgoingRequestsQueryKey() });
+      toast({ title: "Request sent", description: `Message request sent to ${recipientUsername}. They must accept before you can chat.` });
+      setShowNewChat(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.error ?? err.message ?? "Failed to send request";
+      toast({ title: "Request failed", description: msg, variant: "destructive" });
+    }
+  };
+
+  const handleAccept = async (requestId: number, senderUsername: string) => {
+    try {
+      await respondMutation.mutateAsync({ id: requestId, data: { action: "accept" } });
+      queryClient.invalidateQueries({ queryKey: getListIncomingRequestsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetMessageStatsQueryKey() });
+      toast({ title: "Request accepted", description: `You can now chat with ${senderUsername}.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleReject = async (requestId: number) => {
+    try {
+      await respondMutation.mutateAsync({ id: requestId, data: { action: "reject" } });
+      queryClient.invalidateQueries({ queryKey: getListIncomingRequestsQueryKey() });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleSendMessage = async () => {
     if (!selectedPartnerId || !selectedPartnerPublicKey) {
-      toast({ title: "No conversation selected", description: "Click the + button on the left to start a new chat first.", variant: "destructive" });
+      toast({ title: "No conversation selected", description: "Select a chat from the sidebar first.", variant: "destructive" });
       return;
     }
     if (!messageInput.trim()) return;
@@ -154,12 +189,13 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetMessageStatsQueryKey() });
     } catch (err: any) {
-      toast({ title: "Send failed", description: err.message, variant: "destructive" });
+      const msg = err?.response?.data?.error ?? err.message ?? "Failed to send";
+      toast({ title: "Send failed", description: msg, variant: "destructive" });
     }
   };
 
   const handleLogout = async () => {
-    await logoutMutation.mutateAsync({});
+    await logoutMutation.mutateAsync();
     logout();
     setLocation("/");
   };
@@ -173,9 +209,17 @@ export default function Dashboard() {
     });
   };
 
-  const newContactCandidates = allUsers?.filter(
-    u => !conversations?.some(c => c.partnerId === u.id)
-  ) ?? [];
+  const outgoingByRecipient = new Map(outgoingRequests?.map(r => [r.recipientId, r]) ?? []);
+  const conversationPartnerIds = new Set(conversations?.map(c => c.partnerId) ?? []);
+
+  const newContactCandidates = allUsers?.filter(u => {
+    if (u.id === user?.id) return false;
+    if (outgoingByRecipient.has(u.id)) return false;
+    if (conversationPartnerIds.has(u.id)) return false;
+    return true;
+  }) ?? [];
+
+  const pendingIncoming = incomingRequests ?? [];
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background text-foreground font-mono overflow-hidden">
@@ -203,6 +247,8 @@ export default function Dashboard() {
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-64 border-r border-border flex flex-col overflow-hidden shrink-0">
+
+          {/* Stats */}
           <div className="p-3 border-b border-border space-y-1">
             <div className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Stats</div>
             <div className="grid grid-cols-3 gap-1 text-center">
@@ -221,8 +267,45 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Incoming requests inbox */}
+          {pendingIncoming.length > 0 && (
+            <div className="border-b border-border">
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-widest">Requests</span>
+                <span className="text-xs bg-primary text-background px-1.5 py-0.5 font-bold">
+                  {pendingIncoming.length}
+                </span>
+              </div>
+              <div className="max-h-40 overflow-y-auto">
+                {pendingIncoming.map(req => (
+                  <div key={req.id} className="px-3 py-2 border-b border-border/50 bg-primary/5">
+                    <div className="text-sm font-medium mb-1">{req.senderUsername}</div>
+                    <div className="text-xs text-muted-foreground mb-2">wants to message you</div>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleAccept(req.id, req.senderUsername)}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 text-xs bg-primary text-background hover:bg-primary/80 transition-colors font-bold"
+                      >
+                        <Check className="w-3 h-3" />
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleReject(req.id)}
+                        className="flex-1 flex items-center justify-center gap-1 py-1 text-xs border border-border hover:bg-secondary transition-colors text-muted-foreground"
+                      >
+                        <X className="w-3 h-3" />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Conversations header + New chat button */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-            <span className="text-xs text-muted-foreground uppercase tracking-widest">Conversations</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-widest">Chats</span>
             <Button
               variant="ghost"
               size="sm"
@@ -234,31 +317,44 @@ export default function Dashboard() {
             </Button>
           </div>
 
+          {/* New chat dropdown — sends a request */}
           {showNewChat && (
             <div className="border-b border-border">
-              <div className="px-3 py-1 text-xs text-muted-foreground bg-card">New conversation</div>
+              <div className="px-3 py-1 text-xs text-muted-foreground bg-card">Send a message request</div>
               {newContactCandidates.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-muted-foreground">No new users available</div>
+                <div className="px-3 py-2 text-xs text-muted-foreground">No new users to request</div>
               ) : (
                 newContactCandidates.map(u => (
                   <button
                     key={u.id}
-                    onClick={() => handleStartNewChat(u.id, u.publicKeySpki, u.username)}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors flex items-center gap-2"
+                    onClick={() => handleSendRequest(u.id, u.username)}
+                    disabled={sendRequestMutation.isPending}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors flex items-center gap-2 disabled:opacity-50"
                   >
                     <Users className="w-3 h-3 text-muted-foreground" />
-                    {u.username}
+                    <span className="flex-1">{u.username}</span>
+                    <span className="text-xs text-primary">Request →</span>
                   </button>
                 ))
               )}
             </div>
           )}
 
+          {/* Pending outgoing requests (sent, waiting) */}
+          {outgoingRequests?.filter(r => r.status === "pending").map(req => (
+            <div key={req.id} className="px-3 py-2 border-b border-border/50 flex items-center gap-2 opacity-60">
+              <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="text-sm flex-1">{req.recipientUsername}</span>
+              <span className="text-xs text-muted-foreground">pending</span>
+            </div>
+          ))}
+
+          {/* Accepted conversations */}
           <div className="flex-1 overflow-y-auto">
             {convoLoading && <div className="p-3 text-xs text-muted-foreground">Loading...</div>}
             {conversations?.length === 0 && !convoLoading && (
               <div className="p-3 text-xs text-muted-foreground">
-                No conversations yet. Click + to start one.
+                No chats yet. Send a request to start.
               </div>
             )}
             {conversations?.map(c => (
@@ -272,7 +368,9 @@ export default function Dashboard() {
                   <Lock className="w-3 h-3 text-primary" />
                 </div>
                 <div className="text-xs text-muted-foreground mt-0.5">
-                  {c.messageCount} message{c.messageCount !== 1 ? "s" : ""}
+                  {c.messageCount === 0
+                    ? "Say hello — channel open"
+                    : `${c.messageCount} message${c.messageCount !== 1 ? "s" : ""}`}
                 </div>
               </button>
             ))}
@@ -291,12 +389,12 @@ export default function Dashboard() {
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
               <Lock className="w-10 h-10 text-primary opacity-40" />
               <div className="w-full max-w-xs space-y-3">
-                <div className="text-xs text-muted-foreground uppercase tracking-widest text-center mb-4">How to send a message</div>
+                <div className="text-xs text-muted-foreground uppercase tracking-widest text-center mb-4">How it works</div>
                 {[
-                  { n: "1", text: 'Click "New chat" on the left sidebar' },
-                  { n: "2", text: "Select a user from the dropdown list" },
-                  { n: "3", text: "Type your message in the box below" },
-                  { n: "4", text: 'Click "Send" — it encrypts before sending' },
+                  { n: "1", text: 'Click "New chat" → send a message request' },
+                  { n: "2", text: "The other person accepts the request" },
+                  { n: "3", text: "A private encrypted channel opens" },
+                  { n: "4", text: "Messages are encrypted before leaving your device" },
                 ].map(step => (
                   <div key={step.n} className="flex items-start gap-3 text-sm">
                     <span className="text-primary font-bold shrink-0 w-5">{step.n}.</span>
@@ -305,7 +403,7 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="text-xs text-muted-foreground font-mono bg-card border border-card-border px-3 py-2 text-center max-w-xs">
-                To demo E2EE, open an incognito window and register a second account
+                Open an incognito window + register a second account to demo E2EE
               </div>
             </div>
           ) : (
