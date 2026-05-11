@@ -114,33 +114,32 @@ router.get("/messages/conversations", async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
 
-  const rows = await db
-    .select({
-      partnerId: sql<number>`CASE WHEN ${messagesTable.senderId} = ${userId} THEN ${messagesTable.recipientId} ELSE ${messagesTable.senderId} END`,
-      partnerUsername: usersTable.username,
-      partnerPublicKeySpki: usersTable.publicKeySpki,
-      messageCount: sql<number>`COUNT(*)::int`,
-      lastMessageAt: sql<string>`MAX(${messagesTable.createdAt})::text`,
-    })
-    .from(messagesTable)
-    .innerJoin(
-      usersTable,
-      sql`${usersTable.id} = CASE WHEN ${messagesTable.senderId} = ${userId} THEN ${messagesTable.recipientId} ELSE ${messagesTable.senderId} END`,
-    )
-    .where(
-      or(
-        eq(messagesTable.senderId, userId),
-        eq(messagesTable.recipientId, userId),
-      ),
-    )
-    .groupBy(
-      sql`CASE WHEN ${messagesTable.senderId} = ${userId} THEN ${messagesTable.recipientId} ELSE ${messagesTable.senderId} END`,
-      usersTable.username,
-      usersTable.publicKeySpki,
-    )
-    .orderBy(sql`MAX(${messagesTable.createdAt}) DESC`);
+  const rows = await db.execute<{
+    partnerId: number;
+    partnerUsername: string;
+    partnerPublicKeySpki: string;
+    messageCount: number;
+    lastMessageAt: string;
+  }>(sql`
+    SELECT
+      sub.partner_id        AS "partnerId",
+      u.username            AS "partnerUsername",
+      u.public_key_spki     AS "partnerPublicKeySpki",
+      COUNT(*)::int         AS "messageCount",
+      MAX(sub.created_at)::text AS "lastMessageAt"
+    FROM (
+      SELECT
+        CASE WHEN sender_id = ${userId} THEN recipient_id ELSE sender_id END AS partner_id,
+        created_at
+      FROM messages
+      WHERE sender_id = ${userId} OR recipient_id = ${userId}
+    ) sub
+    JOIN users u ON u.id = sub.partner_id
+    GROUP BY sub.partner_id, u.username, u.public_key_spki
+    ORDER BY MAX(sub.created_at) DESC
+  `);
 
-  res.json(ListConversationsResponse.parse(rows));
+  res.json(ListConversationsResponse.parse(rows.rows));
 });
 
 router.get("/messages/stats", async (req, res): Promise<void> => {
