@@ -62,21 +62,29 @@ export interface MessageInput {
   ciphertextForRecipient: string;
   /** Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox) */
   ciphertextForSender: string;
-  /** Base64 IV for recipient ciphertext */
+  /** Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars) */
   ivForRecipient: string;
-  /** Base64 IV for sender ciphertext */
+  /** Base64 IV for sender ciphertext (12 bytes → 16 base64 chars) */
   ivForSender: string;
+  /** Client-generated UUID v4 — used server-side for replay-attack detection */
+  messageId: string;
+  /** ISO-8601 timestamp of when the client encrypted the message */
+  clientSentAt: string;
 }
 
 export interface Message {
   id: number;
+  messageId: string;
   senderId: number;
   recipientId: number;
   ciphertextForRecipient: string;
   ciphertextForSender: string;
   ivForRecipient: string;
   ivForSender: string;
+  /** sent | delivered | read */
+  status: string;
   createdAt: string;
+  clientSentAt?: string;
 }
 
 export interface ConversationSummary {

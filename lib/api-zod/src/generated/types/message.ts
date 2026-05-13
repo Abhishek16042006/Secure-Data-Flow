@@ -8,11 +8,15 @@
 
 export interface Message {
   id: number;
+  messageId: string;
   senderId: number;
   recipientId: number;
   ciphertextForRecipient: string;
   ciphertextForSender: string;
   ivForRecipient: string;
   ivForSender: string;
+  /** sent | delivered | read */
+  status: string;
   createdAt: string;
+  clientSentAt?: string;
 }

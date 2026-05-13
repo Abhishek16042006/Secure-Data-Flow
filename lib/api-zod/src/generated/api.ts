@@ -107,8 +107,22 @@ export const SendMessageBody = zod.object({
     .describe(
       "Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)",
     ),
-  ivForRecipient: zod.string().describe("Base64 IV for recipient ciphertext"),
-  ivForSender: zod.string().describe("Base64 IV for sender ciphertext"),
+  ivForRecipient: zod
+    .string()
+    .describe(
+      "Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars)",
+    ),
+  ivForSender: zod
+    .string()
+    .describe("Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)"),
+  messageId: zod
+    .string()
+    .describe(
+      "Client-generated UUID v4 — used server-side for replay-attack detection",
+    ),
+  clientSentAt: zod
+    .string()
+    .describe("ISO-8601 timestamp of when the client encrypted the message"),
 });
 
 /**
@@ -120,13 +134,16 @@ export const GetConversationParams = zod.object({
 
 export const GetConversationResponseItem = zod.object({
   id: zod.number(),
+  messageId: zod.string(),
   senderId: zod.number(),
   recipientId: zod.number(),
   ciphertextForRecipient: zod.string(),
   ciphertextForSender: zod.string(),
   ivForRecipient: zod.string(),
   ivForSender: zod.string(),
+  status: zod.string().describe("sent | delivered | read"),
   createdAt: zod.string(),
+  clientSentAt: zod.string().optional(),
 });
 export const GetConversationResponse = zod.array(GetConversationResponseItem);
 

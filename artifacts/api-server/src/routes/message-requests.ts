@@ -1,3 +1,13 @@
+/**
+ * message-requests.ts — Message request system
+ *
+ * Security hardening:
+ *  - requestLimiter (10 req / 15 min) on send to prevent spam.
+ *  - Bidirectional duplicate check (A→B and B→A).
+ *  - Audit logging on all state changes.
+ *  - Socket.IO real-time delivery of accept/reject events.
+ */
+
 import { Router, type IRouter } from "express";
 import { db, messageRequestsTable, usersTable } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
@@ -6,6 +16,9 @@ import {
   RespondToMessageRequestBody,
   RespondToMessageRequestParams,
 } from "@workspace/api-zod";
+import { requestLimiter } from "../lib/rate-limiters";
+import { audit } from "../lib/audit-logger";
+import { emitRequestUpdate } from "../sockets/index";
 
 const router: IRouter = Router();
 
@@ -18,7 +31,13 @@ function requireAuth(req: any, res: any): number | null {
   return userId;
 }
 
-function formatRequest(r: any, senderUsername: string, recipientUsername: string, senderPublicKeySpki: string, recipientPublicKeySpki: string) {
+function formatRequest(
+  r: any,
+  senderUsername: string,
+  recipientUsername: string,
+  senderPublicKeySpki: string,
+  recipientPublicKeySpki: string,
+) {
   return {
     id: r.id,
     senderId: r.senderId,
@@ -32,7 +51,10 @@ function formatRequest(r: any, senderUsername: string, recipientUsername: string
   };
 }
 
-router.post("/message-requests", async (req, res): Promise<void> => {
+/* ------------------------------------------------------------------
+   POST /api/message-requests — Send a request
+   ------------------------------------------------------------------ */
+router.post("/message-requests", requestLimiter, async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
 
@@ -48,7 +70,12 @@ router.post("/message-requests", async (req, res): Promise<void> => {
     return;
   }
 
-  const recipient = await db.select().from(usersTable).where(eq(usersTable.id, recipientId)).limit(1);
+  const recipient = await db
+    .select({ id: usersTable.id, username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+    .from(usersTable)
+    .where(eq(usersTable.id, recipientId))
+    .limit(1);
+
   if (recipient.length === 0) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -82,13 +109,31 @@ router.post("/message-requests", async (req, res): Promise<void> => {
     .values({ senderId: userId, recipientId, status: "pending" })
     .returning();
 
-  const sender = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  const sender = await db
+    .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
 
-  res.status(201).json(
-    formatRequest(newReq, sender[0].username, recipient[0].username, sender[0].publicKeySpki, recipient[0].publicKeySpki),
+  const formatted = formatRequest(
+    newReq,
+    sender[0].username,
+    recipient[0].username,
+    sender[0].publicKeySpki,
+    recipient[0].publicKeySpki,
   );
+
+  /* Notify recipient in real-time that a new request arrived */
+  emitRequestUpdate(recipientId, { type: "new_request", request: formatted });
+
+  audit({ event: "MSG_REQUEST_SENT", userId, targetUserId: recipientId, ip: req.ip });
+
+  res.status(201).json(formatted);
 });
 
+/* ------------------------------------------------------------------
+   GET /api/message-requests/incoming — Pending inbox
+   ------------------------------------------------------------------ */
 router.get("/message-requests/incoming", async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -100,8 +145,12 @@ router.get("/message-requests/incoming", async (req, res): Promise<void> => {
 
   const result = await Promise.all(
     rows.map(async (r) => {
-      const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, r.senderId)).limit(1);
-      const [me] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+      const [sender] = await db
+        .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+        .from(usersTable).where(eq(usersTable.id, r.senderId)).limit(1);
+      const [me] = await db
+        .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+        .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
       return formatRequest(r, sender.username, me.username, sender.publicKeySpki, me.publicKeySpki);
     }),
   );
@@ -109,6 +158,9 @@ router.get("/message-requests/incoming", async (req, res): Promise<void> => {
   res.json(result);
 });
 
+/* ------------------------------------------------------------------
+   GET /api/message-requests/outgoing — All sent requests
+   ------------------------------------------------------------------ */
 router.get("/message-requests/outgoing", async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -120,8 +172,12 @@ router.get("/message-requests/outgoing", async (req, res): Promise<void> => {
 
   const result = await Promise.all(
     rows.map(async (r) => {
-      const [recipient] = await db.select().from(usersTable).where(eq(usersTable.id, r.recipientId)).limit(1);
-      const [me] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+      const [recipient] = await db
+        .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+        .from(usersTable).where(eq(usersTable.id, r.recipientId)).limit(1);
+      const [me] = await db
+        .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+        .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
       return formatRequest(r, me.username, recipient.username, me.publicKeySpki, recipient.publicKeySpki);
     }),
   );
@@ -129,6 +185,9 @@ router.get("/message-requests/outgoing", async (req, res): Promise<void> => {
   res.json(result);
 });
 
+/* ------------------------------------------------------------------
+   PATCH /api/message-requests/:id — Accept or reject
+   ------------------------------------------------------------------ */
 router.patch("/message-requests/:id", async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
@@ -174,10 +233,35 @@ router.patch("/message-requests/:id", async (req, res): Promise<void> => {
     .where(eq(messageRequestsTable.id, params.data.id))
     .returning();
 
-  const [sender] = await db.select().from(usersTable).where(eq(usersTable.id, updated.senderId)).limit(1);
-  const [recipient] = await db.select().from(usersTable).where(eq(usersTable.id, updated.recipientId)).limit(1);
+  const [sender] = await db
+    .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+    .from(usersTable).where(eq(usersTable.id, updated.senderId)).limit(1);
+  const [recipient] = await db
+    .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
+    .from(usersTable).where(eq(usersTable.id, updated.recipientId)).limit(1);
 
-  res.json(formatRequest(updated, sender.username, recipient.username, sender.publicKeySpki, recipient.publicKeySpki));
+  const formatted = formatRequest(
+    updated,
+    sender.username,
+    recipient.username,
+    sender.publicKeySpki,
+    recipient.publicKeySpki,
+  );
+
+  /* Notify original sender of outcome */
+  emitRequestUpdate(updated.senderId, {
+    type: newStatus === "accepted" ? "request_accepted" : "request_rejected",
+    request: formatted,
+  });
+
+  audit({
+    event: newStatus === "accepted" ? "MSG_REQUEST_ACCEPTED" : "MSG_REQUEST_REJECTED",
+    userId,
+    targetUserId: updated.senderId,
+    ip: req.ip,
+  });
+
+  res.json(formatted);
 });
 
 export default router;
