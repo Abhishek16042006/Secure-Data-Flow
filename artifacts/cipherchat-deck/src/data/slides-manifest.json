@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "id": "a1b2c3d4-0001-4e5f-8a9b-111111111111",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide1Introduction.tsx",
+    "title": "Introduction",
+    "description": "Project title, college logo, and team members",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0002-4e5f-8a9b-222222222222",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide2WhyPrivacy.tsx",
+    "title": "Why Privacy Matters",
+    "description": "The case for E2EE with CipherChat reference",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0003-4e5f-8a9b-333333333333",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide3ProblemStatement.tsx",
+    "title": "Problem Statement",
+    "description": "Key problems with existing messaging platforms",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0004-4e5f-8a9b-444444444444",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide4Workflow.tsx",
+    "title": "How It Works",
+    "description": "6-step encryption workflow from register to decrypt",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0005-4e5f-8a9b-555555555555",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide5KeyFeatures.tsx",
+    "title": "Key Security Features",
+    "description": "ECDH, session hardening, TOFU and replay protection",
+    "speakerNotes": ""
+  }
+]
