@@ -25,7 +25,6 @@ export default function Slide6AdvDisadv() {
           <div style={{ width: '1.8vw', height: '1.8vw', backgroundColor: '#4F7FFF', borderRadius: '0.3vw' }} />
           <span style={{ fontSize: '1.2vw', fontWeight: 700, letterSpacing: '-0.02em' }}>CipherChat</span>
         </div>
-        <span style={{ fontSize: '1vw', color: 'rgba(255,255,255,0.4)' }}>07 / 09</span>
       </div>
 
       {/* Content */}
