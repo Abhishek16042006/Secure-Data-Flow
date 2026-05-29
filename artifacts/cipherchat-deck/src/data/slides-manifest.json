@@ -32,8 +32,16 @@
     "speakerNotes": ""
   },
   {
-    "id": "a1b2c3d4-0005-4e5f-8a9b-555555555555",
+    "id": "a1b2c3d4-0005-4e5f-8a9b-aaaaaaaaaaaa",
     "position": 5,
+    "filepath": "src/pages/slides/Slide5Architecture.tsx",
+    "title": "System Architecture Design",
+    "description": "Alice → Server → Bob data flow with zero-knowledge principle",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0005-4e5f-8a9b-555555555555",
+    "position": 6,
     "filepath": "src/pages/slides/Slide5KeyFeatures.tsx",
     "title": "Core Features",
     "description": "ECDH, session hardening, TOFU and replay protection",
@@ -41,7 +49,7 @@
   },
   {
     "id": "a1b2c3d4-0006-4e5f-8a9b-666666666666",
-    "position": 6,
+    "position": 7,
     "filepath": "src/pages/slides/Slide6AdvDisadv.tsx",
     "title": "Advantages & Disadvantages",
     "description": "Pros and cons of the E2EE approach",
@@ -49,7 +57,7 @@
   },
   {
     "id": "a1b2c3d4-0007-4e5f-8a9b-777777777777",
-    "position": 7,
+    "position": 8,
     "filepath": "src/pages/slides/Slide7Conclusion.tsx",
     "title": "Conclusion",
     "description": "Project summary and tech stack recap",
@@ -57,7 +65,7 @@
   },
   {
     "id": "a1b2c3d4-0008-4e5f-8a9b-888888888888",
-    "position": 8,
+    "position": 9,
     "filepath": "src/pages/slides/Slide8ThankYou.tsx",
     "title": "Thank You",
     "description": "Closing slide with college logo",
