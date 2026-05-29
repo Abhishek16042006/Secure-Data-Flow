@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/cipherchat-deck/"
+title = "CipherChat Presentation"
+version = "1.0.0"
+id = "artifacts/cipherchat-deck"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/cipherchat-deck/" ]
+localPort = 22527
+
+[services.development]
+run = "pnpm --filter @workspace/cipherchat-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cipherchat-deck", "run", "build" ]
+publicDir = "artifacts/cipherchat-deck/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22527"
+BASE_PATH = "/cipherchat-deck/"
