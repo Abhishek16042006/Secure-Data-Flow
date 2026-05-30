@@ -503,7 +503,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-background text-foreground font-mono overflow-hidden">
+    <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden" style={{background: 'linear-gradient(160deg, #fff0f7 0%, #ffffff 55%, #fff5fa 100%)'}}>
 
       {/* Session locked banner */}
       {isSessionLocked && (
@@ -554,9 +554,10 @@ export default function Dashboard() {
         </div>
       )}
 
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center gap-2 font-bold text-primary">
-          <Lock className="w-5 h-5" />
+      <header className="flex items-center justify-between px-4 py-3 border-b border-pink-100 shrink-0 bg-white/80 backdrop-blur-md">
+        <div className="flex items-center gap-2 font-bold text-lg"
+          style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+          <Lock className="w-5 h-5 text-pink-500" />
           <span>E2EE</span>
         </div>
         <div className="flex items-center gap-4">
@@ -585,7 +586,7 @@ export default function Dashboard() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 border-r border-border flex flex-col overflow-hidden shrink-0">
+        <aside className="w-64 border-r border-pink-100 flex flex-col overflow-hidden shrink-0 bg-white/70 backdrop-blur-sm">
 
           {/* Stats */}
           <div className="p-3 border-b border-border space-y-1">
@@ -741,34 +742,47 @@ export default function Dashboard() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {!selectedPartnerId ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
-              <Lock className="w-10 h-10 text-primary opacity-40" />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)', boxShadow: '0 8px 32px rgba(233,30,140,0.3)'}}>
+                <Lock className="w-8 h-8 text-white" />
+              </div>
+              <div className="text-center space-y-1">
+                <div className="font-semibold text-foreground">End-to-End Encrypted</div>
+                <div className="text-sm text-muted-foreground">Select a chat or start a new one</div>
+              </div>
               <div className="w-full max-w-xs space-y-3">
-                <div className="text-xs text-muted-foreground uppercase tracking-widest text-center mb-4">How it works</div>
                 {[
-                  { n: "1", text: 'Click "New chat" → send a message request' },
-                  { n: "2", text: "The other person accepts the request" },
+                  { n: "1", text: 'Click "New chat" → search and send a request' },
+                  { n: "2", text: "The other person accepts" },
                   { n: "3", text: "A private encrypted channel opens" },
-                  { n: "4", text: "Messages are encrypted before leaving your device" },
+                  { n: "4", text: "Messages are encrypted before sending" },
                 ].map(step => (
-                  <div key={step.n} className="flex items-start gap-3 text-sm">
-                    <span className="text-primary font-bold shrink-0 w-5">{step.n}.</span>
+                  <div key={step.n} className="flex items-center gap-3 text-sm bg-white rounded-xl px-4 py-2.5 border border-pink-100 shadow-sm">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)'}}>
+                      {step.n}
+                    </span>
                     <span className="text-muted-foreground">{step.text}</span>
                   </div>
                 ))}
               </div>
-              <div className="text-xs text-muted-foreground font-mono bg-card border border-card-border px-3 py-2 text-center max-w-xs">
-                Open an incognito window + register a second account to demo E2EE
+              <div className="text-xs text-muted-foreground bg-pink-50 border border-pink-100 px-4 py-2.5 rounded-xl text-center max-w-xs">
+                💡 Open an incognito window + register a second account to demo E2EE
               </div>
             </div>
           ) : (
             <>
               {/* Conversation header with fingerprint */}
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0">
+              <div className="px-4 py-3 border-b border-pink-100 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
+                    style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)'}}>
+                    {selectedPartnerUsername?.[0]?.toUpperCase()}
+                  </div>
                   <div>
                     <div className="text-sm font-bold">{selectedPartnerUsername}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Lock className="w-3 h-3 text-primary" />
+                      <Lock className="w-3 h-3 text-pink-500" />
                       End-to-end encrypted
                     </div>
                   </div>
@@ -812,27 +826,23 @@ export default function Dashboard() {
                   const showRaw = expandedRaw.has(msg.id);
                   return (
                     <div key={msg.id} className={`flex flex-col gap-1 ${isMe ? "items-end" : "items-start"}`}>
-                      <div className={`max-w-[70%] px-3 py-2 border text-sm ${
-                        isMe
-                          ? "bg-primary/10 border-primary/30 text-foreground"
-                          : "bg-card border-card-border text-foreground"
-                      }`}>
+                      <div className={`max-w-[72%] px-4 py-2.5 text-sm ${isMe ? "bubble-sent" : "bubble-received"}`}>
                         {msg.decryptionFailed ? (
-                          <span className="text-muted-foreground italic">[Encrypted — key unavailable]</span>
+                          <span className={isMe ? "text-pink-100 italic" : "text-muted-foreground italic"}>[Encrypted — key unavailable]</span>
                         ) : (
                           <span>{msg.plaintext}</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Lock className="w-2.5 h-2.5 text-primary" />
-                        <span className="text-primary text-xs">ENCRYPTED</span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+                        <Lock className="w-2.5 h-2.5 text-pink-400" />
+                        <span className="text-pink-400 font-semibold text-[10px] tracking-wide">E2EE</span>
                         <span>{new Date(msg.createdAt).toLocaleTimeString()}</span>
                         {isMe && msg.status === "read" && (
-                          <span className="text-primary">✓✓</span>
+                          <span className="text-pink-500">✓✓</span>
                         )}
                         <button
                           onClick={() => toggleRaw(msg.id)}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          className="flex items-center gap-1 hover:text-pink-500 transition-colors"
                           title="View raw ciphertext"
                         >
                           {showRaw ? <EyeOff className="w-2.5 h-2.5" /> : <Eye className="w-2.5 h-2.5" />}
@@ -840,13 +850,13 @@ export default function Dashboard() {
                         </button>
                       </div>
                       {showRaw && (
-                        <div className="max-w-[70%] bg-card border border-card-border p-2 text-xs font-mono text-muted-foreground break-all">
-                          <div className="text-primary text-xs mb-1">Ciphertext stored on server:</div>
-                          <div className="break-all">{isMe ? msg.ciphertextForSender : msg.ciphertextForRecipient}</div>
-                          <div className="text-primary text-xs mt-2 mb-1">IV (AES-GCM nonce):</div>
-                          <div className="break-all">{isMe ? msg.ivForSender : msg.ivForRecipient}</div>
-                          <div className="text-primary text-xs mt-2 mb-1">Message ID (replay protection):</div>
-                          <div className="break-all text-muted-foreground/70">{msg.messageId}</div>
+                        <div className="max-w-[72%] bg-white border border-pink-100 rounded-xl p-3 text-xs font-mono text-muted-foreground break-all shadow-sm">
+                          <div className="text-pink-500 text-xs font-semibold mb-1">Ciphertext on server:</div>
+                          <div className="break-all text-gray-500">{isMe ? msg.ciphertextForSender : msg.ciphertextForRecipient}</div>
+                          <div className="text-pink-500 text-xs font-semibold mt-2 mb-1">IV (AES-GCM nonce):</div>
+                          <div className="break-all text-gray-500">{isMe ? msg.ivForSender : msg.ivForRecipient}</div>
+                          <div className="text-pink-500 text-xs font-semibold mt-2 mb-1">Message ID (replay protection):</div>
+                          <div className="break-all text-gray-400">{msg.messageId}</div>
                         </div>
                       )}
                     </div>
@@ -855,8 +865,8 @@ export default function Dashboard() {
                 {/* Typing indicator */}
                 {partnerIsTyping && (
                   <div className="flex items-start">
-                    <div className="bg-card border border-card-border px-3 py-2 text-xs text-muted-foreground flex items-center gap-2">
-                      <span className="animate-pulse">●●●</span>
+                    <div className="bubble-received px-4 py-2.5 text-xs text-muted-foreground flex items-center gap-2">
+                      <span className="animate-pulse tracking-widest text-pink-400">●●●</span>
                       <span>{selectedPartnerUsername} is typing</span>
                     </div>
                   </div>
@@ -865,7 +875,7 @@ export default function Dashboard() {
               </div>
 
               {/* Send box */}
-              <div className="px-4 py-3 border-t border-border shrink-0">
+              <div className="px-4 py-3 border-t border-pink-100 shrink-0 bg-white/80 backdrop-blur-sm">
                 <form
                   onSubmit={e => { e.preventDefault(); handleSendMessage(); }}
                   className="flex gap-2"
@@ -874,26 +884,27 @@ export default function Dashboard() {
                     <Input
                       value={messageInput}
                       onChange={e => handleInputChange(e.target.value)}
-                      placeholder={isSessionLocked ? "Session locked — log in again to send" : "Type a message — encrypted before sending..."}
-                      className="pr-24 font-mono text-sm"
+                      placeholder={isSessionLocked ? "Session locked — log in again to send" : "Type a message…"}
+                      className="pr-20 text-sm rounded-xl border-pink-200 focus:border-pink-400 bg-white"
                       disabled={sendMessageMutation.isPending || isSessionLocked}
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-primary">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-xs text-pink-400 font-semibold">
                       <Lock className="w-3 h-3" />
                       <span>E2EE</span>
                     </div>
                   </div>
-                  <Button
+                  <button
                     type="submit"
                     disabled={sendMessageMutation.isPending || !messageInput.trim() || isSessionLocked}
-                    className="gap-2"
+                    className="btn-gradient flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                   >
                     <Send className="w-4 h-4" />
-                    {sendMessageMutation.isPending ? "Encrypting..." : "Send"}
-                  </Button>
+                    {sendMessageMutation.isPending ? "Encrypting…" : "Send"}
+                  </button>
                 </form>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Encrypted with ECDH shared secret + AES-256-GCM — server stores ciphertext only
+                <div className="mt-1.5 text-xs text-muted-foreground flex items-center gap-1.5">
+                  <ShieldCheck className="w-3 h-3 text-pink-400" />
+                  ECDH P-256 + AES-256-GCM — server stores ciphertext only
                 </div>
               </div>
             </>
