@@ -102,6 +102,7 @@ export default function Dashboard() {
   const [messageInput, setMessageInput] = useState("");
   const [decryptedMessages, setDecryptedMessages] = useState<DecryptedMessage[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedRaw, setExpandedRaw] = useState<Set<number>>(new Set());
   const [socketConnected, setSocketConnected] = useState(false);
 
@@ -487,6 +488,11 @@ export default function Dashboard() {
     if (conversationPartnerIds.has(u.id)) return false;
     return true;
   }) ?? [];
+  const filteredCandidates = searchQuery.trim()
+    ? newContactCandidates.filter(u =>
+        u.username.toLowerCase().includes(searchQuery.toLowerCase().trim())
+      )
+    : [];
   const pendingIncoming = incomingRequests ?? [];
 
   const getTrustIcon = () => {
@@ -551,7 +557,7 @@ export default function Dashboard() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
         <div className="flex items-center gap-2 font-bold text-primary">
           <Lock className="w-5 h-5" />
-          <span>CipherChat</span>
+          <span>E2EE</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -642,7 +648,7 @@ export default function Dashboard() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowNewChat(!showNewChat)}
+              onClick={() => { setShowNewChat(!showNewChat); setSearchQuery(""); }}
               className="h-6 px-2 text-xs text-primary gap-1 border border-primary/30 hover:bg-primary/10"
             >
               <Plus className="w-3 h-3" />
@@ -650,25 +656,37 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          {/* New chat dropdown */}
+          {/* New chat search panel */}
           {showNewChat && (
-            <div className="border-b border-border">
-              <div className="px-3 py-1 text-xs text-muted-foreground bg-card">Send a message request</div>
-              {newContactCandidates.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-muted-foreground">No new users to request</div>
+            <div className="border-b border-border bg-card">
+              <div className="px-3 pt-2 pb-1">
+                <Input
+                  autoFocus
+                  placeholder="Search username…"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              {searchQuery.trim() === "" ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">Type a username to find someone</div>
+              ) : filteredCandidates.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">No users found</div>
               ) : (
-                newContactCandidates.map(u => (
-                  <button
-                    key={u.id}
-                    onClick={() => handleSendRequest(u.id, u.username)}
-                    disabled={sendRequestMutation.isPending}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Users className="w-3 h-3 text-muted-foreground" />
-                    <span className="flex-1">{u.username}</span>
-                    <span className="text-xs text-primary">Request →</span>
-                  </button>
-                ))
+                <div className="max-h-48 overflow-y-auto pb-1">
+                  {filteredCandidates.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => { handleSendRequest(u.id, u.username); setSearchQuery(""); setShowNewChat(false); }}
+                      disabled={sendRequestMutation.isPending}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-secondary transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <span className="flex-1">{u.username}</span>
+                      <span className="text-xs text-primary font-bold">Request →</span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
           )}

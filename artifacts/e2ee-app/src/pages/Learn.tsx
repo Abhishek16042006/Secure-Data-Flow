@@ -285,7 +285,7 @@ CREATE TABLE messages (
           <div className="w-px h-4 bg-border" />
           <div className="flex items-center gap-2 text-primary font-bold">
             <Lock className="w-5 h-5" />
-            CipherChat — Architecture & Security Guide
+            E2EE — Architecture & Security Guide
           </div>
         </div>
       </header>
@@ -294,7 +294,7 @@ CREATE TABLE messages (
 
         <Section title="Architecture Overview" icon={Cpu}>
           <p className="text-sm text-muted-foreground">
-            CipherChat follows a strict zero-knowledge architecture. The server is a dumb pipe —
+            E2EE follows a strict zero-knowledge architecture. The server is a dumb pipe —
             it routes ciphertext and stores metadata, but it has no ability to read any message content.
           </p>
           <CodeBlock label="System Architecture (text diagram)" code={`
@@ -594,7 +594,7 @@ async function decryptMessage(
         <div className="border-t border-border pt-6 text-center text-xs text-muted-foreground space-y-1">
           <div className="flex items-center justify-center gap-2">
             <Lock className="w-3 h-3 text-primary" />
-            <span>CipherChat — E2EE Demo</span>
+            <span>E2EE — End-to-End Encryption Demo</span>
           </div>
           <div>Built with Web Crypto API (ECDH P-256 + AES-256-GCM + PBKDF2) · Node.js + Express · PostgreSQL</div>
           <div>The server has never seen your messages in plaintext.</div>

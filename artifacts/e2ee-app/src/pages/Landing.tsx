@@ -12,7 +12,7 @@ export default function Landing() {
       <header className="p-6 flex justify-between items-center border-b border-border">
         <div className="flex items-center gap-2 font-bold text-xl text-primary">
           <Lock className="w-6 h-6" />
-          <span>CipherChat</span>
+          <span>E2EE</span>
         </div>
         <Link href="/learn" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
           Architecture <ArrowRight className="w-4 h-4" />
@@ -21,7 +21,7 @@ export default function Landing() {
 
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center p-6 gap-12 max-w-6xl mx-auto w-full">
         <div className="flex-1 space-y-8">
-          <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
+          <h1 className="text-4xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
             Trust no one.<br/>
             <span className="text-primary">Not even us.</span>
           </h1>
@@ -33,7 +33,7 @@ export default function Landing() {
           <div className="p-6 bg-card border border-card-border rounded-lg space-y-6 font-mono text-sm shadow-xl">
             <div className="flex items-center justify-between text-muted-foreground">
               <div className="flex flex-col items-center gap-2">
-                <Smartphone className="w-8 h-8 text-white" />
+                <Smartphone className="w-8 h-8 text-foreground" />
                 <span>Browser</span>
               </div>
               
@@ -78,7 +78,7 @@ export default function Landing() {
                 Login
               </button>
             </div>
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-foreground">
               {isLogin ? "Access your vault" : "Create your keys"}
             </h2>
             <p className="text-xs text-muted-foreground mt-1">
