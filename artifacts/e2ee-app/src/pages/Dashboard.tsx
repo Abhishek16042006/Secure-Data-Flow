@@ -29,6 +29,7 @@ import {
   getGetMessageStatsQueryKey,
   getListIncomingRequestsQueryKey,
   getListOutgoingRequestsQueryKey,
+  getListUsersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -122,14 +123,30 @@ export default function Dashboard() {
   const sendRequestMutation = useSendMessageRequest();
   const respondMutation = useRespondToMessageRequest();
 
-  const { data: conversations, isLoading: convoLoading } = useListConversations();
-  const { data: stats } = useGetMessageStats();
-  const { data: allUsers } = useListUsers();
-  const { data: incomingRequests } = useListIncomingRequests();
-  const { data: outgoingRequests } = useListOutgoingRequests();
+  const { data: conversations, isLoading: convoLoading } = useListConversations({
+    query: { queryKey: getListConversationsQueryKey(), refetchInterval: 4000 },
+  });
+  const { data: stats } = useGetMessageStats({
+    query: { queryKey: getGetMessageStatsQueryKey(), refetchInterval: 8000 },
+  });
+  const { data: allUsers } = useListUsers({
+    query: { queryKey: getListUsersQueryKey(), refetchInterval: 10000 },
+  });
+  const { data: incomingRequests } = useListIncomingRequests({
+    query: { queryKey: getListIncomingRequestsQueryKey(), refetchInterval: 3000 },
+  });
+  const { data: outgoingRequests } = useListOutgoingRequests({
+    query: { queryKey: getListOutgoingRequestsQueryKey(), refetchInterval: 5000 },
+  });
   const { data: rawMessages, isLoading: msgsLoading } = useGetConversation(
     selectedPartnerId ?? 0,
-    { query: { enabled: !!selectedPartnerId, queryKey: getGetConversationQueryKey(selectedPartnerId ?? 0) } }
+    {
+      query: {
+        enabled: !!selectedPartnerId,
+        queryKey: getGetConversationQueryKey(selectedPartnerId ?? 0),
+        refetchInterval: selectedPartnerId ? 3000 : false,
+      },
+    }
   );
 
   /* ------------------------------------------------------------------
@@ -168,63 +185,88 @@ export default function Dashboard() {
   }, [selectedPartnerPublicKey, selectedPartnerId]);
 
   /* ------------------------------------------------------------------
-     Socket.IO — connect when logged in, disconnect on logout
+     Socket.IO — connect as soon as the user is logged in.
+     Private key is NOT required to receive socket events; decryption
+     is handled separately in the rawMessages → decryptAll effect.
      ------------------------------------------------------------------ */
   useEffect(() => {
-    if (!user || !privateKeyBytes) return;
+    if (!user) return;
 
     const socket = getSocket();
 
-    socket.on("connect", () => setSocketConnected(true));
-    socket.on("disconnect", () => setSocketConnected(false));
+    const onConnect = () => setSocketConnected(true);
+    const onDisconnect = () => setSocketConnected(false);
 
     /* Real-time message delivery */
-    socket.on("new_message", (msg: any) => {
-      // Invalidate the relevant conversation cache to trigger re-fetch + re-decrypt
-      if (
+    const onNewMessage = (msg: any) => {
+      const involvesCurrent =
         (msg.senderId === selectedPartnerId && msg.recipientId === user.id) ||
-        (msg.senderId === user.id && msg.recipientId === selectedPartnerId)
-      ) {
-        queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(selectedPartnerId ?? 0) });
+        (msg.senderId === user.id && msg.recipientId === selectedPartnerId);
+
+      if (involvesCurrent) {
+        queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(selectedPartnerId!) });
+      } else if (msg.recipientId === user.id || msg.senderId === user.id) {
+        // Message for a different conversation — invalidate that one too
+        const otherId = msg.senderId === user.id ? msg.recipientId : msg.senderId;
+        queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(otherId) });
       }
       queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetMessageStatsQueryKey() });
-    });
+    };
 
-    /* Request accepted / rejected notification */
-    socket.on("request_update", (data: any) => {
+    /* Request notifications */
+    const onRequestUpdate = (data: any) => {
       queryClient.invalidateQueries({ queryKey: getListIncomingRequestsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getListOutgoingRequestsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getListConversationsQueryKey() });
-      if (data.type === "request_accepted") {
-        toast({ title: "Request accepted", description: `${data.request?.senderUsername ?? "Someone"} accepted your message request!` });
+      if (data.type === "new_request") {
+        toast({
+          title: "New message request",
+          description: `${data.request?.senderUsername ?? "Someone"} wants to message you.`,
+        });
+      } else if (data.type === "request_accepted") {
+        toast({
+          title: "Request accepted",
+          description: `${data.request?.senderUsername ?? "Someone"} accepted your message request!`,
+        });
       }
-    });
+    };
 
     /* Typing indicator */
-    socket.on("typing", (data: TypingState) => {
+    const onTyping = (data: TypingState) => {
       if (data.fromUserId !== selectedPartnerId) return;
       setPartnerIsTyping(data.isTyping);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       if (data.isTyping) {
         typingTimeoutRef.current = setTimeout(() => setPartnerIsTyping(false), 3000);
       }
-    });
+    };
 
     /* Message read acknowledgement */
-    socket.on("message_read", (data: any) => {
-      queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(selectedPartnerId ?? 0) });
-    });
+    const onMessageRead = () => {
+      if (selectedPartnerId) {
+        queryClient.invalidateQueries({ queryKey: getGetConversationQueryKey(selectedPartnerId) });
+      }
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("new_message", onNewMessage);
+    socket.on("request_update", onRequestUpdate);
+    socket.on("typing", onTyping);
+    socket.on("message_read", onMessageRead);
+
+    if (socket.connected) setSocketConnected(true);
 
     return () => {
-      socket.off("new_message");
-      socket.off("request_update");
-      socket.off("typing");
-      socket.off("message_read");
-      socket.off("connect");
-      socket.off("disconnect");
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+      socket.off("new_message", onNewMessage);
+      socket.off("request_update", onRequestUpdate);
+      socket.off("typing", onTyping);
+      socket.off("message_read", onMessageRead);
     };
-  }, [user, privateKeyBytes, selectedPartnerId, queryClient]);
+  }, [user, selectedPartnerId, queryClient, toast]);
 
   /* ------------------------------------------------------------------
      Typing indicator — emit to server when user types
