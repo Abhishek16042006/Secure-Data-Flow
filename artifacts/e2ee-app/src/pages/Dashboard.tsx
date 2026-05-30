@@ -516,6 +516,22 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Session cookie collision detection banner.
+          If the partner's public key equals OUR OWN public key, it means the
+          server session belongs to our partner (both users logged in on the
+          same browser — they share one session cookie). This makes E2EE
+          impossible — the two accounts must use separate browser contexts. */}
+      {selectedPartnerPublicKey && user && selectedPartnerPublicKey === user.publicKeySpki && (
+        <div className="bg-red-500/10 border-b border-red-500/30 px-4 py-2 flex items-center gap-3 text-sm">
+          <ShieldAlert className="w-4 h-4 text-red-500 shrink-0" />
+          <span className="text-red-400">
+            <strong>Session conflict</strong> — both accounts appear to be using the same browser session.
+            Messages cannot be decrypted.{" "}
+            <strong>Open the second account in an Incognito / Private window</strong> so each user has a separate session cookie.
+          </span>
+        </div>
+      )}
+
       {/* Key change warning banner */}
       {trustResult === "changed" && selectedPartnerUsername && (
         <div className="bg-red-500/10 border-b border-red-500/30 px-4 py-2 flex items-center gap-3 text-sm">
