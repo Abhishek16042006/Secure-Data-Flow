@@ -1,0 +1,180 @@
+You are a Senior Full-Stack Engineer, DevOps Engineer, and GitHub Pages deployment expert.
+
+Your mission is to completely analyze, repair, configure, test, and deploy this project so it is publicly accessible without any manual intervention from me.
+
+IMPORTANT:
+Do not make assumptions.
+Inspect every file before making changes.
+Do not stop until you have verified the deployment works.
+
+====================================================
+PHASE 1 — PROJECT ANALYSIS
+====================================================
+
+Inspect the entire repository and determine:
+
+- Framework (React, Vite, Next.js, HTML, Express, Node, TypeScript, etc.)
+- Build tool
+- Package manager (npm, pnpm, yarn)
+- Whether a backend exists
+- Whether a database exists
+- Whether WebSockets exist
+- Whether authentication exists
+- Whether the project is static or dynamic
+
+Create a complete architecture report before modifying anything.
+
+====================================================
+PHASE 2 — FIND THE ROOT CAUSE
+====================================================
+
+Determine EXACTLY why GitHub Pages returns:
+
+404 File not found
+
+Possible causes include but are not limited to:
+
+• Missing index.html
+• Wrong deployment folder
+• Incorrect build output
+• Wrong base path
+• Missing homepage/base configuration
+• Wrong asset paths
+• React Router issue
+• GitHub Pages configuration
+• Branch configuration
+• Build failure
+• GitHub Actions failure
+• Backend deployed to GitHub Pages
+• Express server dependency
+• Missing production build
+
+Explain the REAL cause.
+
+====================================================
+PHASE 3 — REPAIR THE PROJECT
+====================================================
+
+Repair every issue automatically.
+
+If Static Website:
+
+✔ Create index.html if needed
+✔ Fix CSS paths
+✔ Fix JS paths
+✔ Fix image paths
+✔ Verify navigation
+✔ Verify mobile responsiveness
+
+If React:
+
+✔ Configure GitHub Pages correctly
+✔ Configure base path
+✔ Configure React Router
+✔ Configure production build
+✔ Generate build
+
+If Vite:
+
+✔ Configure vite.config
+✔ Set correct base path:
+   /Secure-Data-Flow/
+
+✔ Build production
+✔ Verify assets
+
+If Express/Node backend exists:
+
+DO NOT deploy backend on GitHub Pages.
+
+Instead:
+
+Separate frontend and backend.
+
+Deploy frontend correctly.
+
+Prepare backend for Render or Railway.
+
+Update frontend API endpoints.
+
+====================================================
+PHASE 4 — DEPLOYMENT
+====================================================
+
+Automatically:
+
+• Build the project
+• Test locally
+• Fix build errors
+• Generate production files
+• Configure GitHub Pages
+• Configure GitHub Actions if required
+
+Ensure deployment succeeds.
+
+====================================================
+PHASE 5 — VERIFY EVERYTHING
+====================================================
+
+Before finishing verify:
+
+✔ Website opens
+✔ No 404
+✔ No blank page
+✔ CSS loads
+✔ JavaScript loads
+✔ Images load
+✔ Fonts load
+✔ Navigation works
+✔ Browser console has zero errors
+✔ Network requests succeed
+✔ Mobile works
+✔ Desktop works
+
+====================================================
+PHASE 6 — GITHUB
+====================================================
+
+After all fixes:
+
+Commit every change.
+
+Use commit message:
+
+Fix complete deployment and GitHub Pages configuration
+
+Push to GitHub automatically.
+
+Verify GitHub received the latest commit.
+
+====================================================
+PHASE 7 — FINAL REPORT
+====================================================
+
+Provide:
+
+1. Framework detected
+2. Problems found
+3. Files modified
+4. Deployment method
+5. GitHub Pages status
+6. Public URL
+7. Remaining issues (if any)
+8. Why the deployment failed before
+9. Why it now works
+
+DO NOT stop until deployment has been verified.
+
+If GitHub Pages cannot technically host this application because it requires Node.js, Express, databases, WebSockets, authentication, encryption services, or server-side APIs, DO NOT force GitHub Pages.
+
+Instead:
+
+• Explain why.
+• Convert the project into the correct deployment architecture.
+• Frontend → Vercel
+• Backend → Render or Railway
+• Update all environment variables.
+• Verify both deployments communicate correctly.
+• Push all changes to GitHub.
+
+Your goal is a fully working public application, not merely a successful build.
