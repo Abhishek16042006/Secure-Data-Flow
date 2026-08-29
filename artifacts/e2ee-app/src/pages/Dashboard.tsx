@@ -503,7 +503,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden" style={{background: 'linear-gradient(160deg, #fff0f7 0%, #ffffff 55%, #fff5fa 100%)'}}>
+    <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden" style={{background: 'linear-gradient(160deg, #FBF1FF 0%, #ffffff 54%, #E3D0EA 150%)'}}>
 
       {/* Session locked banner */}
       {isSessionLocked && (
@@ -556,7 +556,7 @@ export default function Dashboard() {
 
       <header className="flex items-center justify-between px-4 py-3 border-b border-pink-100 shrink-0 bg-white/80 backdrop-blur-md">
         <div className="flex items-center gap-2 font-bold text-lg"
-          style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+          style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
           <Lock className="w-5 h-5 text-pink-500" />
           <span>E2EE</span>
         </div>
@@ -743,7 +743,7 @@ export default function Dashboard() {
           {!selectedPartnerId ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-                style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)', boxShadow: '0 8px 32px rgba(233,30,140,0.3)'}}>
+          style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', boxShadow: '0 8px 32px rgba(58,28,54,0.28)'}}>
                 <Lock className="w-8 h-8 text-white" />
               </div>
               <div className="text-center space-y-1">
@@ -759,7 +759,7 @@ export default function Dashboard() {
                 ].map(step => (
                   <div key={step.n} className="flex items-center gap-3 text-sm bg-white rounded-xl px-4 py-2.5 border border-pink-100 shadow-sm">
                     <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)'}}>
+                      style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)'}}>
                       {step.n}
                     </span>
                     <span className="text-muted-foreground">{step.text}</span>
@@ -776,7 +776,7 @@ export default function Dashboard() {
               <div className="px-4 py-3 border-b border-pink-100 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{background: 'linear-gradient(135deg, #e91e8c, #c2185b)'}}>
+                    style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)'}}>
                     {selectedPartnerUsername?.[0]?.toUpperCase()}
                   </div>
                   <div>

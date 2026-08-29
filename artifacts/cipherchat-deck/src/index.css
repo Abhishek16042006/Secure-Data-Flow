@@ -11,11 +11,11 @@
 }
 
 :root {
-  --slide-primary: #4F7FFF;
-  --slide-accent: #7C6BF0;
-  --slide-bg: #0C0F1A;
+  --slide-primary: #9B71B2;
+  --slide-accent: #E3D0EA;
+  --slide-bg: #3A1C36;
   --slide-text: #FFFFFF;
-  --slide-muted: rgba(255, 255, 255, 0.5);
+  --slide-muted: rgba(251, 241, 255, 0.68);
   --font-display-family: "Inter", system-ui, sans-serif;
   --font-body-family: "Inter", system-ui, sans-serif;
   color-scheme: dark;
@@ -32,6 +32,42 @@ body,
 body {
   background: var(--slide-bg);
   color: var(--slide-text);
+}
+
+/* Shared CipherChat palette for legacy inline slide accents. */
+.slide-viewer,
+.slide-viewer > iframe,
+.bg-black {
+  background-color: var(--slide-bg) !important;
+}
+
+/* Translate the existing inline accent declarations without changing the
+   slide platform contract or repeating the same token in every slide. */
+[style*="background-color: rgb(12, 15, 26)"] {
+  background-color: var(--slide-bg) !important;
+}
+[style*="background-color: rgb(19, 23, 38)"] {
+  background-color: #241426 !important;
+}
+[style*="background-color: rgb(79, 127, 255)"] {
+  background-color: var(--slide-primary) !important;
+}
+[style*="color: rgb(79, 127, 255)"] {
+  color: var(--slide-primary) !important;
+}
+[style*="background-color: rgb(124, 107, 240)"] {
+  background-color: var(--slide-accent) !important;
+}
+[style*="color: rgb(124, 107, 240)"] {
+  color: var(--slide-accent) !important;
+}
+[style*="rgba(79, 127, 255"] {
+  border-color: rgba(155, 113, 178, 0.38) !important;
+  background-color: rgba(155, 113, 178, 0.18) !important;
+}
+[style*="rgba(124, 107, 240"] {
+  border-color: rgba(227, 208, 234, 0.42) !important;
+  background-color: rgba(227, 208, 234, 0.18) !important;
 }
 
 .slide {

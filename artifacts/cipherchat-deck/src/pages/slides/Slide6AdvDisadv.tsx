@@ -5,7 +5,7 @@ export default function Slide6AdvDisadv() {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        backgroundColor: '#0C0F1A',
+        backgroundColor: '#3A1C36',
         fontFamily: "'Inter', sans-serif",
         display: 'flex',
         flexDirection: 'column',
