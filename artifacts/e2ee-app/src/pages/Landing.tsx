@@ -8,20 +8,20 @@ export default function Landing() {
   const [isLogin, setIsLogin] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] flex flex-col text-foreground" style={{background: 'linear-gradient(160deg, #FBF1FF 0%, #ffffff 54%, #E3D0EA 150%)'}}>
+    <div className="min-h-[100dvh] flex flex-col text-foreground" style={{background: 'linear-gradient(160deg, #FFF6FD 0%, #ffffff 54%, #F3DCEF 150%)'}}>
 
       {/* Decorative gradient blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none select-none">
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full opacity-20"
-          style={{background: 'radial-gradient(circle, #9B71B2 0%, transparent 70%)'}} />
+          style={{background: 'radial-gradient(circle, #E5BDDF 0%, transparent 70%)'}} />
         <div className="absolute top-1/3 -right-24 w-80 h-80 rounded-full opacity-15"
-          style={{background: 'radial-gradient(circle, #E3D0EA 0%, transparent 70%)'}} />
+          style={{background: 'radial-gradient(circle, #F3DCEF 0%, transparent 70%)'}} />
         <div className="absolute -bottom-16 left-1/3 w-72 h-72 rounded-full opacity-10"
-          style={{background: 'radial-gradient(circle, #3A1C36 0%, transparent 70%)'}} />
+          style={{background: 'radial-gradient(circle, #6A3B65 0%, transparent 70%)'}} />
       </div>
 
       <header className="relative z-10 px-6 py-4 flex justify-between items-center border-b border-pink-100 bg-white/70 backdrop-blur-md">
-        <div className="flex items-center gap-2 font-bold text-xl" style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+        <div className="flex items-center gap-2 font-bold text-xl" style={{background: 'var(--orchid-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
           <Lock className="w-5 h-5 text-pink-500" />
           <span>E2EE</span>
         </div>
@@ -41,7 +41,7 @@ export default function Landing() {
             </div>
             <h1 className="text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-foreground">
               Trust no one.<br/>
-              <span style={{background: 'linear-gradient(135deg, #9B71B2 0%, #3A1C36 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+              <span style={{background: 'var(--orchid-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
                 Not even us.
               </span>
             </h1>
@@ -77,7 +77,7 @@ export default function Landing() {
 
               <div className="flex-1 flex flex-col items-center gap-2 px-4">
                 <div className="text-xs text-pink-500 font-semibold animate-pulse">Encrypting locally…</div>
-                <div className="w-full h-0.5 rounded-full relative overflow-hidden" style={{background: 'linear-gradient(90deg, #9B71B2, #3A1C36)'}}>
+                <div className="w-full h-0.5 rounded-full relative overflow-hidden" style={{background: 'var(--orchid-gradient)'}}>
                   <div className="absolute inset-0 animate-pulse" style={{background: 'linear-gradient(90deg, transparent, white, transparent)'}} />
                 </div>
                 <Lock className="w-4 h-4 text-pink-500" />
@@ -107,15 +107,15 @@ export default function Landing() {
           <div className="flex rounded-xl overflow-hidden border border-pink-100 mb-6 bg-pink-50/50">
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${!isLogin ? "rounded-xl text-white shadow-md" : "text-muted-foreground hover:text-foreground"}`}
-              style={!isLogin ? {background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', boxShadow: '0 4px 12px rgba(58,28,54,0.26)'} : {}}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${!isLogin ? "rounded-xl text-[var(--orchid-dark)] shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+              style={!isLogin ? {background: 'var(--orchid-gradient)', boxShadow: '0 4px 12px rgba(58,28,54,0.26)'} : {}}
             >
               Register
             </button>
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${isLogin ? "rounded-xl text-white shadow-md" : "text-muted-foreground hover:text-foreground"}`}
-              style={isLogin ? {background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', boxShadow: '0 4px 12px rgba(58,28,54,0.26)'} : {}}
+              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${isLogin ? "rounded-xl text-[var(--orchid-dark)] shadow-md" : "text-muted-foreground hover:text-foreground"}`}
+              style={isLogin ? {background: 'var(--orchid-gradient)', boxShadow: '0 4px 12px rgba(58,28,54,0.26)'} : {}}
             >
               Login
             </button>

@@ -503,7 +503,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden" style={{background: 'linear-gradient(160deg, #FBF1FF 0%, #ffffff 54%, #E3D0EA 150%)'}}>
+    <div className="h-[100dvh] flex flex-col text-foreground overflow-hidden" style={{background: 'linear-gradient(160deg, #FFF6FD 0%, #ffffff 54%, #F3DCEF 150%)'}}>
 
       {/* Session locked banner */}
       {isSessionLocked && (
@@ -556,7 +556,7 @@ export default function Dashboard() {
 
       <header className="flex items-center justify-between px-4 py-3 border-b border-pink-100 shrink-0 bg-white/80 backdrop-blur-md">
         <div className="flex items-center gap-2 font-bold text-lg"
-          style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+          style={{background: 'var(--orchid-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
           <Lock className="w-5 h-5 text-pink-500" />
           <span>E2EE</span>
         </div>
@@ -612,7 +612,7 @@ export default function Dashboard() {
             <div className="border-b border-border">
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-xs text-muted-foreground uppercase tracking-widest">Requests</span>
-                <span className="text-xs bg-primary text-background px-1.5 py-0.5 font-bold">
+                <span className="text-xs bg-primary text-primary-foreground px-1.5 py-0.5 font-bold">
                   {pendingIncoming.length}
                 </span>
               </div>
@@ -624,7 +624,7 @@ export default function Dashboard() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleAccept(req.id, req.senderUsername)}
-                        className="flex-1 flex items-center justify-center gap-1 py-1 text-xs bg-primary text-background hover:bg-primary/80 transition-colors font-bold"
+                        className="flex-1 flex items-center justify-center gap-1 py-1 text-xs bg-primary text-primary-foreground hover:bg-primary/80 transition-colors font-bold"
                       >
                         <Check className="w-3 h-3" />
                         Accept
@@ -743,8 +743,8 @@ export default function Dashboard() {
           {!selectedPartnerId ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
-          style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)', boxShadow: '0 8px 32px rgba(58,28,54,0.28)'}}>
-                <Lock className="w-8 h-8 text-white" />
+          style={{background: 'var(--orchid-gradient)', boxShadow: '0 8px 32px rgba(58,28,54,0.28)'}}>
+                <Lock className="w-8 h-8 text-[var(--orchid-dark)]" />
               </div>
               <div className="text-center space-y-1">
                 <div className="font-semibold text-foreground">End-to-End Encrypted</div>
@@ -758,8 +758,8 @@ export default function Dashboard() {
                   { n: "4", text: "Messages are encrypted before sending" },
                 ].map(step => (
                   <div key={step.n} className="flex items-center gap-3 text-sm bg-white rounded-xl px-4 py-2.5 border border-pink-100 shadow-sm">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)'}}>
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-[var(--orchid-dark)] shrink-0"
+                      style={{background: 'var(--orchid-gradient)'}}>
                       {step.n}
                     </span>
                     <span className="text-muted-foreground">{step.text}</span>
@@ -775,8 +775,8 @@ export default function Dashboard() {
               {/* Conversation header with fingerprint */}
               <div className="px-4 py-3 border-b border-pink-100 flex items-center justify-between shrink-0 bg-white/80 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0"
-                    style={{background: 'linear-gradient(135deg, #9B71B2, #3A1C36)'}}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--orchid-dark)] font-bold text-sm shrink-0"
+                    style={{background: 'var(--orchid-gradient)'}}>
                     {selectedPartnerUsername?.[0]?.toUpperCase()}
                   </div>
                   <div>
@@ -896,7 +896,7 @@ export default function Dashboard() {
                   <button
                     type="submit"
                     disabled={sendMessageMutation.isPending || !messageInput.trim() || isSessionLocked}
-                    className="btn-gradient flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                    className="btn-gradient flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[var(--orchid-dark)] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                   >
                     <Send className="w-4 h-4" />
                     {sendMessageMutation.isPending ? "Encrypting…" : "Send"}

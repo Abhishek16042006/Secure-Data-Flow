@@ -273,7 +273,7 @@ CREATE TABLE messages (
   ];
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground font-mono">
+    <div className="min-h-[100dvh] bg-background text-foreground font-sans">
       <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center gap-3">
           <Link href="/">
