@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/next-layer-intelligence/"
+title = "The Next Layer of Intelligence"
+description = "A standalone dark cinematic landing page for an AI infrastructure platform, featuring a full-bleed looping video hero, measured responsive composition, partner wordmarks, and an accessible mobile menu."
+version = "1.0.0"
+id = "artifacts/next-layer-intelligence"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/next-layer-intelligence/" ]
+localPort = 19083
+
+[services.development]
+run = "pnpm --filter @workspace/next-layer-intelligence run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/next-layer-intelligence", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/next-layer-intelligence/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19083"
+BASE_PATH = "/next-layer-intelligence/"
