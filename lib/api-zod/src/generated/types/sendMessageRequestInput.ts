@@ -7,5 +7,6 @@
  */
 
 export interface SendMessageRequestInput {
+  /** @minimum 1 */
   recipientId: number;
 }

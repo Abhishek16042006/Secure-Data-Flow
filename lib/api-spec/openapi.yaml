@@ -94,6 +94,8 @@ paths:
       operationId: logout
       tags: [auth]
       summary: Logout
+      security:
+        - sessionCookie: []
       responses:
         "204":
           description: Logged out
@@ -103,6 +105,8 @@ paths:
       operationId: getMe
       tags: [auth]
       summary: Get current session user
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -122,6 +126,8 @@ paths:
       operationId: listUsers
       tags: [users]
       summary: List all users (for selecting who to message)
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -137,12 +143,15 @@ paths:
       operationId: getUserPublicKey
       tags: [users]
       summary: Get a user's public key (SPKI base64) for encrypting messages to them
+      security:
+        - sessionCookie: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            minimum: 1
       responses:
         "200":
           description: OK
@@ -162,6 +171,8 @@ paths:
       operationId: sendMessage
       tags: [messages]
       summary: Send an encrypted message (ciphertext only — server never sees plaintext)
+      security:
+        - sessionCookie: []
       requestBody:
         required: true
         content:
@@ -193,12 +204,15 @@ paths:
       operationId: getConversation
       tags: [messages]
       summary: Get all encrypted messages between current user and another user
+      security:
+        - sessionCookie: []
       parameters:
         - name: otherUserId
           in: path
           required: true
           schema:
             type: integer
+            minimum: 1
       responses:
         "200":
           description: OK
@@ -220,6 +234,8 @@ paths:
       operationId: listConversations
       tags: [messages]
       summary: List all conversation partners (users the current user has messaged)
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -241,6 +257,8 @@ paths:
       operationId: sendMessageRequest
       tags: [messageRequests]
       summary: Send a message request to another user
+      security:
+        - sessionCookie: []
       requestBody:
         required: true
         content:
@@ -278,6 +296,8 @@ paths:
       operationId: listIncomingRequests
       tags: [messageRequests]
       summary: List incoming pending message requests
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -299,6 +319,8 @@ paths:
       operationId: listOutgoingRequests
       tags: [messageRequests]
       summary: List outgoing message requests (sent by me)
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -320,12 +342,15 @@ paths:
       operationId: respondToMessageRequest
       tags: [messageRequests]
       summary: Accept or reject an incoming message request
+      security:
+        - sessionCookie: []
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            minimum: 1
       requestBody:
         required: true
         content:
@@ -369,6 +394,8 @@ paths:
       operationId: getMessageStats
       tags: [messages]
       summary: Get message statistics for current user
+      security:
+        - sessionCookie: []
       responses:
         "200":
           description: OK
@@ -384,6 +411,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
 
 components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: cipherchat.sid
+
   schemas:
     HealthStatus:
       type: object
@@ -401,35 +434,57 @@ components:
 
     RegisterInput:
       type: object
+      additionalProperties: false
       required: [username, password, publicKeySpki, encryptedPrivateKey, salt, iv]
       properties:
         username:
           type: string
           minLength: 3
+          maxLength: 32
+          pattern: '^[a-zA-Z0-9_-]+$'
         password:
           type: string
-          minLength: 6
+          minLength: 12
+          maxLength: 128
         publicKeySpki:
           type: string
+          minLength: 16
+          maxLength: 4096
+          pattern: '^[A-Za-z0-9+/]+={0,2}$'
           description: Base64-encoded SPKI public key (ECDH P-256)
         encryptedPrivateKey:
           type: string
+          minLength: 16
+          maxLength: 88000
+          pattern: '^[A-Za-z0-9+/]+={0,2}$'
           description: Base64-encoded encrypted private key (AES-GCM with password-derived key)
         salt:
           type: string
+          minLength: 16
+          maxLength: 256
+          pattern: '^[A-Za-z0-9+/]+={0,2}$'
           description: Base64-encoded PBKDF2 salt
         iv:
           type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[A-Za-z0-9+/]{16}$'
           description: Base64-encoded AES-GCM IV used to encrypt the private key
 
     LoginInput:
       type: object
+      additionalProperties: false
       required: [username, password]
       properties:
         username:
           type: string
+          minLength: 3
+          maxLength: 32
+          pattern: '^[a-zA-Z0-9_-]+$'
         password:
           type: string
+          minLength: 1
+          maxLength: 128
 
     AuthResponse:
       type: object
@@ -472,27 +527,43 @@ components:
 
     MessageInput:
       type: object
+      additionalProperties: false
       required: [recipientId, ciphertextForRecipient, ciphertextForSender, ivForRecipient, ivForSender, messageId, clientSentAt]
       properties:
         recipientId:
           type: integer
+          minimum: 1
         ciphertextForRecipient:
           type: string
+          minLength: 1
+          maxLength: 88000
+          pattern: '^[A-Za-z0-9+/]+={0,2}$'
           description: Base64 AES-GCM ciphertext encrypted with recipient's shared secret
         ciphertextForSender:
           type: string
+          minLength: 1
+          maxLength: 88000
+          pattern: '^[A-Za-z0-9+/]+={0,2}$'
           description: Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)
         ivForRecipient:
           type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[A-Za-z0-9+/]{16}$'
           description: Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars)
         ivForSender:
           type: string
+          minLength: 16
+          maxLength: 16
+          pattern: '^[A-Za-z0-9+/]{16}$'
           description: Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)
         messageId:
           type: string
+          format: uuid
           description: Client-generated UUID v4 — used server-side for replay-attack detection
         clientSentAt:
           type: string
+          format: date-time
           description: ISO-8601 timestamp of when the client encrypted the message
 
     Message:
@@ -551,13 +622,16 @@ components:
 
     SendMessageRequestInput:
       type: object
+      additionalProperties: false
       required: [recipientId]
       properties:
         recipientId:
           type: integer
+          minimum: 1
 
     RespondMessageRequestInput:
       type: object
+      additionalProperties: false
       required: [action]
       properties:
         action:

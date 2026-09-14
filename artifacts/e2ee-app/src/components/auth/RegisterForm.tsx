@@ -65,7 +65,7 @@ export function RegisterForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Username</FormLabel>
-              <FormControl><Input placeholder="At least 3 characters" {...field} /></FormControl>
+              <FormControl><Input autoComplete="username" placeholder="At least 3 characters" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -76,7 +76,7 @@ export function RegisterForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
-              <FormControl><Input type="password" placeholder="At least 6 characters" {...field} /></FormControl>
+              <FormControl><Input type="password" autoComplete="new-password" minLength={12} maxLength={128} placeholder="At least 12 characters" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}

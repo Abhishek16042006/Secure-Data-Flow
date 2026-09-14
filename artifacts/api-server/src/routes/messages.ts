@@ -47,15 +47,17 @@ function requireAuth(req: any, res: any): number | null {
    Validate a base64 string.
    AES-GCM IV must be exactly 12 bytes → 16 base64 chars (with padding).
    ------------------------------------------------------------------ */
-const BASE64_RE = /^[A-Za-z0-9+/]+=*$/;
+const BASE64_RE =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+const UUID_V4_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isValidBase64(s: string): boolean {
-  return BASE64_RE.test(s);
+  return s.length > 0 && BASE64_RE.test(s);
 }
 
 function decodeBase64Length(b64: string): number {
-  const padded = b64.replace(/=/g, "");
-  return Math.floor((padded.length * 3) / 4);
+  return Buffer.from(b64, "base64").length;
 }
 
 /* ------------------------------------------------------------------
@@ -100,6 +102,11 @@ router.post("/messages", messageLimiter, async (req, res): Promise<void> => {
   if (decodeBase64Length(ivForRecipient) !== 12 || decodeBase64Length(ivForSender) !== 12) {
     audit({ event: "SUSPICIOUS_PAYLOAD", userId, ip: req.ip, detail: "IV length != 12" });
     res.status(400).json({ error: "IV must be exactly 12 bytes (AES-GCM requirement)" });
+    return;
+  }
+
+  if (!UUID_V4_RE.test(messageId)) {
+    res.status(400).json({ error: "messageId must be a UUID v4" });
     return;
   }
 
@@ -203,7 +210,7 @@ router.get("/messages/conversation/:otherUserId", async (req, res): Promise<void
   const raw = Array.isArray(req.params.otherUserId)
     ? req.params.otherUserId[0]
     : req.params.otherUserId;
-  const params = GetConversationParams.safeParse({ otherUserId: parseInt(raw, 10) });
+  const params = GetConversationParams.safeParse({ otherUserId: Number(raw) });
   if (!params.success) {
     res.status(400).json({ error: "Invalid user id" });
     return;
@@ -252,7 +259,7 @@ router.patch("/messages/:id/read", async (req, res): Promise<void> => {
   const userId = requireAuth(req, res);
   if (!userId) return;
 
-  const msgId = parseInt(req.params.id, 10);
+  const msgId = Number(req.params.id);
   if (isNaN(msgId)) {
     res.status(400).json({ error: "Invalid message id" });
     return;

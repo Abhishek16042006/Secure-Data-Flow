@@ -7,17 +7,38 @@
  */
 
 export interface MessageInput {
+  /** @minimum 1 */
   recipientId: number;
-  /** Base64 AES-GCM ciphertext encrypted with recipient's shared secret */
+  /**
+   * Base64 AES-GCM ciphertext encrypted with recipient's shared secret
+   * @minLength 1
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   ciphertextForRecipient: string;
-  /** Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox) */
+  /**
+   * Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)
+   * @minLength 1
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   ciphertextForSender: string;
-  /** Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars) */
+  /**
+   * Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars)
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   ivForRecipient: string;
-  /** Base64 IV for sender ciphertext (12 bytes → 16 base64 chars) */
+  /**
+   * Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   ivForSender: string;
   /** Client-generated UUID v4 — used server-side for replay-attack detection */
   messageId: string;
   /** ISO-8601 timestamp of when the client encrypted the message */
-  clientSentAt: string;
+  clientSentAt: Date;
 }

@@ -55,7 +55,7 @@ export function LoginForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Username</FormLabel>
-              <FormControl><Input placeholder="At least 3 characters" {...field} /></FormControl>
+              <FormControl><Input autoComplete="username" placeholder="At least 3 characters" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -66,7 +66,7 @@ export function LoginForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
-              <FormControl><Input type="password" placeholder="At least 6 characters" {...field} /></FormControl>
+              <FormControl><Input type="password" autoComplete="current-password" placeholder="At least 6 characters" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -104,10 +104,20 @@ router.post("/message-requests", requestLimiter, async (req, res): Promise<void>
     return;
   }
 
-  const [newReq] = await db
-    .insert(messageRequestsTable)
-    .values({ senderId: userId, recipientId, status: "pending" })
-    .returning();
+  let newReq;
+  try {
+    [newReq] = await db
+      .insert(messageRequestsTable)
+      .values({ senderId: userId, recipientId, status: "pending" })
+      .returning();
+  } catch (err: any) {
+    // The unique pair constraint is the final guard against concurrent duplicates.
+    if (err?.code === "23505") {
+      res.status(409).json({ error: "A request already exists" });
+      return;
+    }
+    throw err;
+  }
 
   const sender = await db
     .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })
@@ -230,8 +240,19 @@ router.patch("/message-requests/:id", async (req, res): Promise<void> => {
   const [updated] = await db
     .update(messageRequestsTable)
     .set({ status: newStatus })
-    .where(eq(messageRequestsTable.id, params.data.id))
+    .where(
+      and(
+        eq(messageRequestsTable.id, params.data.id),
+        eq(messageRequestsTable.recipientId, userId),
+        eq(messageRequestsTable.status, "pending"),
+      ),
+    )
     .returning();
+
+  if (!updated) {
+    res.status(409).json({ error: "Request has already been handled" });
+    return;
+  }
 
   const [sender] = await db
     .select({ username: usersTable.username, publicKeySpki: usersTable.publicKeySpki })

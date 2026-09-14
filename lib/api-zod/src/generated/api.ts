@@ -18,32 +18,87 @@ export const HealthCheckResponse = zod.object({
  * @summary Register a new user — stores public key + encrypted private key
  */
 export const registerBodyUsernameMin = 3;
+export const registerBodyUsernameMax = 32;
 
-export const registerBodyPasswordMin = 6;
+export const registerBodyUsernameRegExp = new RegExp("^[a-zA-Z0-9_-]+$");
+export const registerBodyPasswordMin = 12;
+export const registerBodyPasswordMax = 128;
+
+export const registerBodyPublicKeySpkiMin = 16;
+export const registerBodyPublicKeySpkiMax = 4096;
+
+export const registerBodyPublicKeySpkiRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]+={0,2}$",
+);
+export const registerBodyEncryptedPrivateKeyMin = 16;
+export const registerBodyEncryptedPrivateKeyMax = 88000;
+
+export const registerBodyEncryptedPrivateKeyRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]+={0,2}$",
+);
+export const registerBodySaltMin = 16;
+export const registerBodySaltMax = 256;
+
+export const registerBodySaltRegExp = new RegExp("^[A-Za-z0-9+\/]+={0,2}$");
+export const registerBodyIvMin = 16;
+export const registerBodyIvMax = 16;
+
+export const registerBodyIvRegExp = new RegExp("^[A-Za-z0-9+\/]{16}$");
 
 export const RegisterBody = zod.object({
-  username: zod.string().min(registerBodyUsernameMin),
-  password: zod.string().min(registerBodyPasswordMin),
+  username: zod
+    .string()
+    .min(registerBodyUsernameMin)
+    .max(registerBodyUsernameMax)
+    .regex(registerBodyUsernameRegExp),
+  password: zod
+    .string()
+    .min(registerBodyPasswordMin)
+    .max(registerBodyPasswordMax),
   publicKeySpki: zod
     .string()
+    .min(registerBodyPublicKeySpkiMin)
+    .max(registerBodyPublicKeySpkiMax)
+    .regex(registerBodyPublicKeySpkiRegExp)
     .describe("Base64-encoded SPKI public key (ECDH P-256)"),
   encryptedPrivateKey: zod
     .string()
+    .min(registerBodyEncryptedPrivateKeyMin)
+    .max(registerBodyEncryptedPrivateKeyMax)
+    .regex(registerBodyEncryptedPrivateKeyRegExp)
     .describe(
       "Base64-encoded encrypted private key (AES-GCM with password-derived key)",
     ),
-  salt: zod.string().describe("Base64-encoded PBKDF2 salt"),
+  salt: zod
+    .string()
+    .min(registerBodySaltMin)
+    .max(registerBodySaltMax)
+    .regex(registerBodySaltRegExp)
+    .describe("Base64-encoded PBKDF2 salt"),
   iv: zod
     .string()
+    .min(registerBodyIvMin)
+    .max(registerBodyIvMax)
+    .regex(registerBodyIvRegExp)
     .describe("Base64-encoded AES-GCM IV used to encrypt the private key"),
 });
 
 /**
  * @summary Login — returns session + encrypted private key blob
  */
+export const loginBodyUsernameMin = 3;
+export const loginBodyUsernameMax = 32;
+
+export const loginBodyUsernameRegExp = new RegExp("^[a-zA-Z0-9_-]+$");
+export const loginBodyPasswordMax = 128;
+
 export const LoginBody = zod.object({
-  username: zod.string(),
-  password: zod.string(),
+  username: zod
+    .string()
+    .min(loginBodyUsernameMin)
+    .max(loginBodyUsernameMax)
+    .regex(loginBodyUsernameRegExp),
+  password: zod.string().min(1).max(loginBodyPasswordMax),
 });
 
 export const LoginResponse = zod.object({
@@ -84,8 +139,9 @@ export const ListUsersResponse = zod.array(ListUsersResponseItem);
 /**
  * @summary Get a user's public key (SPKI base64) for encrypting messages to them
  */
+
 export const GetUserPublicKeyParams = zod.object({
-  id: zod.coerce.number(),
+  id: zod.coerce.number().min(1),
 });
 
 export const GetUserPublicKeyResponse = zod.object({
@@ -95,41 +151,79 @@ export const GetUserPublicKeyResponse = zod.object({
 /**
  * @summary Send an encrypted message (ciphertext only — server never sees plaintext)
  */
+
+export const sendMessageBodyCiphertextForRecipientMax = 88000;
+
+export const sendMessageBodyCiphertextForRecipientRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]+={0,2}$",
+);
+export const sendMessageBodyCiphertextForSenderMax = 88000;
+
+export const sendMessageBodyCiphertextForSenderRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]+={0,2}$",
+);
+export const sendMessageBodyIvForRecipientMin = 16;
+export const sendMessageBodyIvForRecipientMax = 16;
+
+export const sendMessageBodyIvForRecipientRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]{16}$",
+);
+export const sendMessageBodyIvForSenderMin = 16;
+export const sendMessageBodyIvForSenderMax = 16;
+
+export const sendMessageBodyIvForSenderRegExp = new RegExp(
+  "^[A-Za-z0-9+\/]{16}$",
+);
+
 export const SendMessageBody = zod.object({
-  recipientId: zod.number(),
+  recipientId: zod.number().min(1),
   ciphertextForRecipient: zod
     .string()
+    .min(1)
+    .max(sendMessageBodyCiphertextForRecipientMax)
+    .regex(sendMessageBodyCiphertextForRecipientRegExp)
     .describe(
       "Base64 AES-GCM ciphertext encrypted with recipient's shared secret",
     ),
   ciphertextForSender: zod
     .string()
+    .min(1)
+    .max(sendMessageBodyCiphertextForSenderMax)
+    .regex(sendMessageBodyCiphertextForSenderRegExp)
     .describe(
       "Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)",
     ),
   ivForRecipient: zod
     .string()
+    .min(sendMessageBodyIvForRecipientMin)
+    .max(sendMessageBodyIvForRecipientMax)
+    .regex(sendMessageBodyIvForRecipientRegExp)
     .describe(
       "Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars)",
     ),
   ivForSender: zod
     .string()
+    .min(sendMessageBodyIvForSenderMin)
+    .max(sendMessageBodyIvForSenderMax)
+    .regex(sendMessageBodyIvForSenderRegExp)
     .describe("Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)"),
   messageId: zod
     .string()
+    .uuid()
     .describe(
       "Client-generated UUID v4 — used server-side for replay-attack detection",
     ),
-  clientSentAt: zod
-    .string()
+  clientSentAt: zod.coerce
+    .date()
     .describe("ISO-8601 timestamp of when the client encrypted the message"),
 });
 
 /**
  * @summary Get all encrypted messages between current user and another user
  */
+
 export const GetConversationParams = zod.object({
-  otherUserId: zod.coerce.number(),
+  otherUserId: zod.coerce.number().min(1),
 });
 
 export const GetConversationResponseItem = zod.object({
@@ -164,8 +258,9 @@ export const ListConversationsResponse = zod.array(
 /**
  * @summary Send a message request to another user
  */
+
 export const SendMessageRequestBody = zod.object({
-  recipientId: zod.number(),
+  recipientId: zod.number().min(1),
 });
 
 /**
@@ -207,8 +302,9 @@ export const ListOutgoingRequestsResponse = zod.array(
 /**
  * @summary Accept or reject an incoming message request
  */
+
 export const RespondToMessageRequestParams = zod.object({
-  id: zod.coerce.number(),
+  id: zod.coerce.number().min(1),
 });
 
 export const RespondToMessageRequestBody = zod.object({

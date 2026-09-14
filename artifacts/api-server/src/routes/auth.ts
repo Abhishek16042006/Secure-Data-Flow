@@ -59,8 +59,9 @@ router.post("/auth/register", authLimiter, async (req, res): Promise<void> => {
     .where(eq(usersTable.username, username));
 
   if (existing.length > 0) {
-    audit({ event: "REGISTER_FAILED_DUPLICATE", ip: req.ip, detail: `username=${username}` });
-    res.status(409).json({ error: "Username already taken" });
+    audit({ event: "REGISTER_FAILED_DUPLICATE", ip: req.ip });
+    // Keep signup responses indistinguishable enough to avoid account enumeration.
+    res.status(400).json({ error: "Registration could not be completed" });
     return;
   }
 
@@ -163,7 +164,11 @@ router.post("/auth/logout", async (req, res): Promise<void> => {
   await new Promise<void>((resolve) => req.session.destroy(() => resolve()));
 
   /* Explicitly clear the cookie on the client */
-  res.clearCookie("connect.sid", { path: "/" });
+  res.clearCookie("cipherchat.sid", {
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  });
 
   audit({ event: "LOGOUT", userId, ip: req.ip });
   res.sendStatus(204);

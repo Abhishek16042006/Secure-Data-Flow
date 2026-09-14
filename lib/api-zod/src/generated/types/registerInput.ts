@@ -7,16 +7,43 @@
  */
 
 export interface RegisterInput {
-  /** @minLength 3 */
+  /**
+   * @minLength 3
+   * @maxLength 32
+   * @pattern ^[a-zA-Z0-9_-]+$
+   */
   username: string;
-  /** @minLength 6 */
+  /**
+   * @minLength 12
+   * @maxLength 128
+   */
   password: string;
-  /** Base64-encoded SPKI public key (ECDH P-256) */
+  /**
+   * Base64-encoded SPKI public key (ECDH P-256)
+   * @minLength 16
+   * @maxLength 4096
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   publicKeySpki: string;
-  /** Base64-encoded encrypted private key (AES-GCM with password-derived key) */
+  /**
+   * Base64-encoded encrypted private key (AES-GCM with password-derived key)
+   * @minLength 16
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   encryptedPrivateKey: string;
-  /** Base64-encoded PBKDF2 salt */
+  /**
+   * Base64-encoded PBKDF2 salt
+   * @minLength 16
+   * @maxLength 256
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   salt: string;
-  /** Base64-encoded AES-GCM IV used to encrypt the private key */
+  /**
+   * Base64-encoded AES-GCM IV used to encrypt the private key
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   iv: string;
 }

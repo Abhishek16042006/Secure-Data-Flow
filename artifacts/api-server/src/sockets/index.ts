@@ -16,6 +16,8 @@ import type { Server as HttpServer } from "node:http";
 import { Server } from "socket.io";
 import type { SessionData } from "express-session";
 import { logger } from "../lib/logger";
+import { db, messageRequestsTable } from "@workspace/db";
+import { and, eq, or } from "drizzle-orm";
 
 /* ------------------------------------------------------------------ */
 /* Module-level singleton so routes can emit events                    */
@@ -42,14 +44,15 @@ declare module "socket.io" {
 export function setupSockets(
   httpServer: HttpServer,
   sessionMiddleware: (req: any, res: any, next: any) => void,
+  allowedOrigin: string | boolean,
 ): Server {
   const io = new Server(httpServer, {
     path: "/api/socket.io",
     cors: {
-      // Allow same origin only; the proxy forwards credentials
-      origin: true,
+      origin: allowedOrigin,
       credentials: true,
     },
+    maxHttpBufferSize: 128 * 1024,
     // Allow 30-second polling before upgrading to WebSocket
     transports: ["polling", "websocket"],
   });
@@ -79,13 +82,62 @@ export function setupSockets(
       logger.info({ userId, reason }, "Socket disconnected");
     });
 
+    let typingWindowStartedAt = Date.now();
+    let typingEventsInWindow = 0;
+
     /* Typing indicator — relay to partner without server storing it */
-    socket.on("typing", (data: { toUserId: number; isTyping: boolean }) => {
-      if (typeof data?.toUserId !== "number") return;
-      socket.to(`user:${data.toUserId}`).emit("typing", {
-        fromUserId: userId,
-        isTyping: !!data.isTyping,
-      });
+    socket.on("typing", async (data: unknown) => {
+      const now = Date.now();
+      if (now - typingWindowStartedAt >= 1_000) {
+        typingWindowStartedAt = now;
+        typingEventsInWindow = 0;
+      }
+      if (typingEventsInWindow >= 30) return;
+      typingEventsInWindow += 1;
+
+      if (
+        typeof data !== "object" ||
+        data === null ||
+        !("toUserId" in data) ||
+        !("isTyping" in data) ||
+        typeof data.toUserId !== "number" ||
+        !Number.isSafeInteger(data.toUserId) ||
+        data.toUserId <= 0 ||
+        typeof data.isTyping !== "boolean"
+      ) {
+        return;
+      }
+
+      try {
+        const [accepted] = await db
+          .select({ id: messageRequestsTable.id })
+          .from(messageRequestsTable)
+          .where(
+            and(
+              or(
+                and(
+                  eq(messageRequestsTable.senderId, userId),
+                  eq(messageRequestsTable.recipientId, data.toUserId),
+                ),
+                and(
+                  eq(messageRequestsTable.senderId, data.toUserId),
+                  eq(messageRequestsTable.recipientId, userId),
+                ),
+              ),
+              eq(messageRequestsTable.status, "accepted"),
+            ),
+          )
+          .limit(1);
+
+        if (!accepted) return;
+
+        socket.to(`user:${data.toUserId}`).emit("typing", {
+          fromUserId: userId,
+          isTyping: data.isTyping,
+        });
+      } catch (err) {
+        logger.warn({ err, userId }, "Typing authorization lookup failed");
+      }
     });
   });
 

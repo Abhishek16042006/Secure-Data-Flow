@@ -14,22 +14,58 @@ export interface ErrorResponse {
 }
 
 export interface RegisterInput {
-  /** @minLength 3 */
+  /**
+   * @minLength 3
+   * @maxLength 32
+   * @pattern ^[a-zA-Z0-9_-]+$
+   */
   username: string;
-  /** @minLength 6 */
+  /**
+   * @minLength 12
+   * @maxLength 128
+   */
   password: string;
-  /** Base64-encoded SPKI public key (ECDH P-256) */
+  /**
+   * Base64-encoded SPKI public key (ECDH P-256)
+   * @minLength 16
+   * @maxLength 4096
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   publicKeySpki: string;
-  /** Base64-encoded encrypted private key (AES-GCM with password-derived key) */
+  /**
+   * Base64-encoded encrypted private key (AES-GCM with password-derived key)
+   * @minLength 16
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   encryptedPrivateKey: string;
-  /** Base64-encoded PBKDF2 salt */
+  /**
+   * Base64-encoded PBKDF2 salt
+   * @minLength 16
+   * @maxLength 256
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   salt: string;
-  /** Base64-encoded AES-GCM IV used to encrypt the private key */
+  /**
+   * Base64-encoded AES-GCM IV used to encrypt the private key
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   iv: string;
 }
 
 export interface LoginInput {
+  /**
+   * @minLength 3
+   * @maxLength 32
+   * @pattern ^[a-zA-Z0-9_-]+$
+   */
   username: string;
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
   password: string;
 }
 
@@ -57,14 +93,35 @@ export interface PublicKeyResponse {
 }
 
 export interface MessageInput {
+  /** @minimum 1 */
   recipientId: number;
-  /** Base64 AES-GCM ciphertext encrypted with recipient's shared secret */
+  /**
+   * Base64 AES-GCM ciphertext encrypted with recipient's shared secret
+   * @minLength 1
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   ciphertextForRecipient: string;
-  /** Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox) */
+  /**
+   * Base64 AES-GCM ciphertext encrypted with sender's own key (for their inbox)
+   * @minLength 1
+   * @maxLength 88000
+   * @pattern ^[A-Za-z0-9+/]+={0,2}$
+   */
   ciphertextForSender: string;
-  /** Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars) */
+  /**
+   * Base64 IV for recipient ciphertext (12 bytes → 16 base64 chars)
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   ivForRecipient: string;
-  /** Base64 IV for sender ciphertext (12 bytes → 16 base64 chars) */
+  /**
+   * Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)
+   * @minLength 16
+   * @maxLength 16
+   * @pattern ^[A-Za-z0-9+/]{16}$
+   */
   ivForSender: string;
   /** Client-generated UUID v4 — used server-side for replay-attack detection */
   messageId: string;
@@ -102,6 +159,7 @@ export interface MessageStats {
 }
 
 export interface SendMessageRequestInput {
+  /** @minimum 1 */
   recipientId: number;
 }
 

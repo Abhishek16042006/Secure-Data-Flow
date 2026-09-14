@@ -7,6 +7,15 @@
  */
 
 export interface LoginInput {
+  /**
+   * @minLength 3
+   * @maxLength 32
+   * @pattern ^[a-zA-Z0-9_-]+$
+   */
   username: string;
+  /**
+   * @minLength 1
+   * @maxLength 128
+   */
   password: string;
 }

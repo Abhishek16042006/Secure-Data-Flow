@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>E2EE Secure Messenger</title>
     <meta name="description" content="E2EE Secure Messenger — built on Replit. Update this description to reflect the app." />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws: wss:;"
+    />
     <meta property="og:title" content="E2EE Secure Messenger" />
     <meta property="og:description" content="E2EE Secure Messenger — built on Replit. Update this description to reflect the app." />
     <meta property="og:type" content="website" />
@@ -13,8 +17,6 @@
     <meta name="twitter:title" content="E2EE Secure Messenger" />
     <meta name="twitter:description" content="E2EE Secure Messenger — built on Replit. Update this description to reflect the app." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   </head>
   <body>
     <div id="root"></div>

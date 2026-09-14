@@ -11,9 +11,12 @@
  */
 
 import rateLimit from "express-rate-limit";
+import { audit } from "./audit-logger";
 
-const json429 = (_req: any, res: any) =>
+const json429 = (req: any, res: any) => {
+  audit({ event: "RATE_LIMIT_HIT", ip: req.ip, detail: req.path });
   res.status(429).json({ error: "Too many requests — please slow down." });
+};
 
 /** Brute-force protection on login and register */
 export const authLimiter = rateLimit({
