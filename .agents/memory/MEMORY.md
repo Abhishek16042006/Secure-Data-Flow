@@ -1,1 +1,2 @@
 - [E2EE artifact boundary](e2ee-artifact-boundary.md) — keep the E2EE frontend and API server together; the API provides its auth, messaging, and realtime backend.
+- [API security integration tests](api-security-tests.md) — production-mode session tests must emulate HTTPS behind the trusted proxy and close Socket.IO before the HTTP listener.
