@@ -11,6 +11,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { getMe } from "@workspace/api-client-react";
 import type { AuthResponse } from "@workspace/api-client-react";
 
 interface SessionContextType {
@@ -20,6 +21,8 @@ interface SessionContextType {
   logout: () => void;
   /** True when user cookie exists but key is absent (page refresh scenario) */
   isSessionLocked: boolean;
+  /** True while the browser session is being restored from the server. */
+  isHydrating: boolean;
 }
 
 const SessionContext = createContext<SessionContextType | null>(null);
@@ -36,6 +39,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthResponse | null>(null);
   const [privateKeyBytes, setPrivateKeyBytes] = useState<Uint8Array<ArrayBuffer> | null>(null);
   const [isSessionLocked, setIsSessionLocked] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(true);
 
   /** Zero the key and clear all auth state */
   const clearCryptoState = useCallback((currentKey: Uint8Array | null) => {
@@ -61,6 +65,35 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
     setUser(null);
     setIsSessionLocked(false);
+  }, []);
+
+  /* ------------------------------------------------------------------
+     Restore the server-backed session before rendering a route.
+     The private key intentionally cannot be restored after a refresh;
+     the authenticated user can still be restored so the app shows the
+     locked dashboard instead of incorrectly sending them to Landing.
+     ------------------------------------------------------------------ */
+  useEffect(() => {
+    let active = true;
+
+    getMe()
+      .then((serverUser) => {
+        if (!active) return;
+        setUser(serverUser);
+      })
+      .catch(() => {
+        // A 401 means there is no active server session. Other failures
+        // also fail closed and leave the user signed out locally.
+        if (!active) return;
+        setUser(null);
+      })
+      .finally(() => {
+        if (active) setIsHydrating(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   /* ------------------------------------------------------------------
@@ -97,7 +130,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, [user, privateKeyBytes]);
 
   return (
-    <SessionContext.Provider value={{ user, privateKeyBytes, login, logout, isSessionLocked }}>
+    <SessionContext.Provider value={{ user, privateKeyBytes, login, logout, isSessionLocked, isHydrating }}>
       {children}
     </SessionContext.Provider>
   );
