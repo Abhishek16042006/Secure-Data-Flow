@@ -559,7 +559,7 @@ components:
           description: Base64 IV for sender ciphertext (12 bytes → 16 base64 chars)
         messageId:
           type: string
-          format: uuid
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
           description: Client-generated UUID v4 — used server-side for replay-attack detection
         clientSentAt:
           type: string
