@@ -1,0 +1,1 @@
+- [E2EE artifact boundary](e2ee-artifact-boundary.md) — keep the E2EE frontend and API server together; the API provides its auth, messaging, and realtime backend.
